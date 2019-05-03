@@ -1,0 +1,52 @@
+{
+  "env": {
+    "node": true,
+    "es6": true
+  },
+  "parserOptions": {
+    "sourceType": "module",
+    "ecmaVersion": 2018
+  },
+  "plugins": [
+    "unicorn",
+    "node"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:node/recommended",
+    "plugin:unicorn/recommended"
+  ],
+  "rules": {
+    "node/no-unsupported-features/es-syntax": [
+      "off"
+    ],
+    "no-console": "off",
+    "prefer-template": "error",
+    "prefer-const": [
+      "error",
+      {
+        "ignoreReadBeforeAssign": true,
+        "destructuring": "all"
+      }
+    ],
+    "padding-line-between-statements": [
+      "error",
+      {
+        "blankLine": "always",
+        "prev": [
+          "const",
+          "let",
+          "var"
+        ],
+        "next": "return"
+      },
+      {
+        "blankLine": "always",
+        "prev": [
+          "block-like"
+        ],
+        "next": "*"
+      }
+    ]
+  }
+}

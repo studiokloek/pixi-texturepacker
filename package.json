@@ -1,0 +1,54 @@
+{
+  "name": "@studiokloek/pixi-texturepacker",
+  "version": "0.0.1",
+  "description": "Pack sprites for PixiJS using TexturePacker CLI.",
+  "author": "Martijn Swart <opensource@studiokloek.nl> (https://studiokloek.nl)",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "repository": "github:studiokloek/pixi-texturepacker",
+  "bugs": {
+    "url": "https://github.com/studiokloek/pixi-texturepacker/issues"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w",
+    "release": "np"
+  },
+  "engines": {
+    "node": ">=8.10.0"
+  },
+  "files": [
+    "dist/*",
+    "bin/*"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "pixi-texturepacker": "./bin/index.js"
+  },
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-plugin-node": "^8.0.1",
+    "eslint-plugin-unicorn": "^8.0.2",
+    "np": "^5.0.1",
+    "rollup": "^1.10.1",
+    "rollup-plugin-run": "^1.1.0",
+    "rollup-plugin-terser": "^4.0.4",
+    "source-map-support": "^0.5.12"
+  },
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "fs-extra": "^7.0.1",
+    "get-value": "^3.0.1",
+    "globby": "^9.2.0",
+    "log-symbols": "^3.0.0",
+    "meow": "^5.0.0",
+    "ora": "^3.4.0",
+    "pupa": "^2.0.0",
+    "sane": "^4.1.0",
+    "set-value": "^3.0.0",
+    "throttle-debounce": "^2.1.0",
+    "uppercamelcase": "^3.0.0"
+  }
+}
