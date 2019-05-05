@@ -73,17 +73,44 @@ function parseAssetData(allAssetData) {
   return parsedData;
 }
 
+function getSortedItems(_itemsData) {
+  const itemsSortable = [];
+
+  for (const assetName of Object.keys(_itemsData)) {
+      if (_itemsData.hasOwnProperty(assetName)) {
+        itemsSortable.push([assetName, _itemsData[assetName]]);
+      }
+  }
+
+  itemsSortable.sort((a, b) => {
+      const x = a[0],
+          y = b[0];
+
+      return x < y ? -1 : x > y ? 1 : 0;
+  });
+
+
+  const items =   {};
+  for (const item of itemsSortable) {
+    items[item[0]] = item[1];
+  }
+
+  return items;
+}
+
 function generateContents(parsedAssetData, loaderData) {
   let contents = '';
 
   // assets
   for (const assetName of Object.keys(parsedAssetData)) {
-    var items = JSON.stringify(parsedAssetData[assetName], null, 2);
-    items = items.replace(/"([^(")"]+)":/g, "$1:");
+    const items = getSortedItems(parsedAssetData[assetName]);
+
+    let itemsContent = JSON.stringify(items, null, 2);
+    itemsContent = itemsContent.replace(/"([^(")"]+)":/g, "$1:");
 
     contents = `${contents}${pupa(assetTemplate, {
       assetName: assetName,
-      assetData: items
+      assetData: itemsContent
     })}\n`;
   }
 
