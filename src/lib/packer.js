@@ -1,6 +1,7 @@
 const ora = require('ora');
 const logSymbols = require('log-symbols');
 const chalk = require('chalk');
+const path = require('path');
 
 import { packFolder } from './texturepacker';
 import { generateCode } from './codegenerator';
@@ -31,46 +32,46 @@ export async function pack(directory, settings) {
   const itemPathParts = itemPath.split('/'),
     directoryName = itemPathParts.pop();
 
-    if (isPacking[itemPath]) {
-      console.log(logSymbols.warning, chalk.yellow(`Allready packing, starting again afterwards...`));
-      shouldPackAgain[itemPath] = true;
-      return;
-    }
-
-    isPacking[itemPath] = true;
-
-    const options = {
-      'sheet': `${settings.targetDirectory}${itemPath}/${directoryName}-{n1}{v}.png`,
-      'data': `${settings.targetDirectory}/${itemPath}/${directoryName}-{n1}{v}.json`,
-      'replace': `${directoryName}=${itemPath}`,
-    }
-
-    const spinner = ora(`Packing ${itemPath}`).start();
-
-    try {
-      const success = await packFolder(`${settings.sourceDirectory}${itemPath}`, options);
-
-      if (!success) {
-        spinner.fail(`Error packing ${itemPath}`);
-
-        return;
-      }
-    } catch (error) {
-      spinner.fail(`Error packing ${itemPath}`);
-      console.error(logSymbols.warning, error.message);
-
-      return;
-    }
-
-    await generateCode(itemPath, settings, itemOptions);
-
-    isPacking[itemPath] = false;
-
-    if (shouldPackAgain[itemPath]) {
-      shouldPackAgain[itemPath] = false;
-      spinner.warn(`Needs repacking, something changed while packing...`);
-      await pack(directory, settings);
-    } else {
-      spinner.succeed(`Done packing ${itemPath}`);
-    }
+  if (isPacking[itemPath]) {
+    console.log(logSymbols.warning, chalk.yellow(`Allready packing, starting again afterwards...`));
+    shouldPackAgain[itemPath] = true;
+    return;
   }
+
+  isPacking[itemPath] = true;
+
+  const options = {
+    'sheet': `${path.join(settings.targetDirectory, itemPath, directoryName)}-{n1}{v}.png`,
+    'data': `${path.join(settings.targetDirectory, itemPath, directoryName)}-{n1}{v}.json`,
+    'replace': `${directoryName}=${itemPath}`,
+  }
+
+  const spinner = ora(`Packing ${itemPath}`).start();
+
+  try {
+    const success = await packFolder(`${path.join(settings.sourceDirectory, itemPath)}`, options);
+
+    if (!success) {
+      spinner.fail(`Error packing ${itemPath}`);
+
+      return;
+    }
+  } catch (error) {
+    spinner.fail(`Error packing ${itemPath}`);
+    console.error(logSymbols.warning, error.message);
+
+    return;
+  }
+
+  await generateCode(itemPath, settings, itemOptions);
+
+  isPacking[itemPath] = false;
+
+  if (shouldPackAgain[itemPath]) {
+    shouldPackAgain[itemPath] = false;
+    spinner.warn(`Needs repacking, something changed while packing...`);
+    await pack(directory, settings);
+  } else {
+    spinner.succeed(`Done packing ${itemPath}`);
+  }
+}

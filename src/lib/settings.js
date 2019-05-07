@@ -18,7 +18,6 @@ export async function readSettingsFrom(_file) {
       watchDelay: 500,
       directories: []
     } });
-
   } catch (error) {
     spinner.fail(`Could not load settings from ${_file}... (does it exist?)`);
 

@@ -4,6 +4,7 @@ const globby = require('globby');
 const pupa = require('pupa');
 const uppercamelcase = require('uppercamelcase');
 const fs = require('fs-extra');
+const path = require('path');
 
 const loaderInfoTemplate = `export const __LOADERINFO__ = {
   fileName : '{fileName}',
@@ -13,14 +14,14 @@ const loaderInfoTemplate = `export const __LOADERINFO__ = {
 
 const assetTemplate = `export const {assetName} = {assetData};`;
 
-async function getDataFrom(path) {
-  return await fs.readJson(path)
+async function getDataFrom(filepath) {
+  return await fs.readJson(filepath)
 }
 
-function convertPathToVariableName(path) {
-  path = `${path}`;
+function convertPathToVariableName(filepath) {
+  filepath = `${filepath}`;
 
-  const parts = path.split('/');
+  const parts = filepath.split('/');
 
   let titleParts = [],
     lastPart;
@@ -41,10 +42,10 @@ function convertPathToVariableName(path) {
   titleParts = uppercamelcase(titleParts.join('-'));
 
   if (parts.length > 0) {
-    path = parts.join('.');
-    path = path.replace(/(\W^\.)/g, '').replace(/\.{2,}/g, '.').replace(/^\./, '').replace(/\.$/, '');
+    filepath = parts.join('.');
+    filepath = filepath.replace(/(\W^\.)/g, '').replace(/\.{2,}/g, '.').replace(/^\./, '').replace(/\.$/, '');
 
-    return [titleParts, path, lastPart].join('.');
+    return [titleParts, filepath, lastPart].join('.');
   }
   else {
     return [titleParts, lastPart].join('.');
@@ -77,20 +78,20 @@ function getSortedItems(_itemsData) {
   const itemsSortable = [];
 
   for (const assetName of Object.keys(_itemsData)) {
-      if (_itemsData.hasOwnProperty(assetName)) {
-        itemsSortable.push([assetName, _itemsData[assetName]]);
-      }
+    if (_itemsData.hasOwnProperty(assetName)) {
+      itemsSortable.push([assetName, _itemsData[assetName]]);
+    }
   }
 
   itemsSortable.sort((a, b) => {
-      const x = a[0],
-          y = b[0];
+    const x = a[0],
+      y = b[0];
 
-      return x < y ? -1 : x > y ? 1 : 0;
+    return x < y ? -1 : x > y ? 1 : 0;
   });
 
 
-  const items =   {};
+  const items = {};
   for (const item of itemsSortable) {
     items[item[0]] = item[1];
   }
@@ -123,26 +124,26 @@ function generateContents(parsedAssetData, loaderData) {
   return contents;
 }
 
-export async function generateCode(path, settings, itemOptions) {
+export async function generateCode(assetpath, settings, itemOptions) {
 
-  const scriptDirectory = get(itemOptions, 'scriptDirectory', {default: settings.scriptDirectory});
+  const scriptDirectory = get(itemOptions, 'scriptDirectory', { default: settings.scriptDirectory });
 
   // read all generated json
-  const paths = await globby(`${settings.targetDirectory}${path}/*[1-9]+.json`),
+  const paths = await globby(`${path.join(settings.targetDirectory, assetpath)}/*[1-9]+.json`),
     actions = [];
 
-  for (const path of paths) {
-    actions.push(getDataFrom(path));
+  for (const filepath of paths) {
+    actions.push(getDataFrom(filepath));
   }
 
   // parse data to object
   const allAssetData = await Promise.all(actions),
     parsedAssetData = parseAssetData(allAssetData),
     loaderInfo = {
-      fileName: path,
+      fileName: assetpath,
       numberOfParts: getNumberOfParts(allAssetData)
     }
 
   const contents = generateContents(parsedAssetData, loaderInfo);
-  await fs.outputFile(`${scriptDirectory}${path}/sprites.ts`, contents);
+  await fs.outputFile(`${path.join(scriptDirectory, assetpath)}/sprites.ts`, contents);
 }
