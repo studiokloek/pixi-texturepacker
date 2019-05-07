@@ -22,6 +22,7 @@ const baseOptions = {
   'enable-rotation': true,
   'quiet': true,
   'extrude': '0',
+  'shape-padding': '2',
   'variant': ['1:@2x', '0.5:']
 };
 
