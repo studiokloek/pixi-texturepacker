@@ -16,7 +16,7 @@ async function main(_file) {
 
   await packAll(directories, settings);
 
-  watch(directories, settings);
+  await watch(directories, settings);
 }
 
 export function pack(_file) {
