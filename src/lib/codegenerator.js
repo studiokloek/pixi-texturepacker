@@ -1,12 +1,15 @@
+import { makeVariableSafe } from './util';
+
 const get = require('get-value');
 const set = require('set-value');
 const globby = require('globby');
 const pupa = require('pupa');
 const uppercamelcase = require('uppercamelcase');
+const camelcase = require('camelcase');
 const fs = require('fs-extra');
 const path = require('path');
 
-const loaderInfoTemplate = `export const __LOADERINFO__ = {
+const loaderInfoTemplate = `export default {
   fileName : '{fileName}',
   numberOfParts : {numberOfParts},
   type: 'sprites'
@@ -18,42 +21,42 @@ async function getDataFrom(filepath) {
   return await fs.readJson(filepath)
 }
 
-function convertPathToVariableName(filepath) {
-  filepath = `${filepath}`;
+function convertPathToVariableName(filePath, basePath) {
+  // forceer string
+  filePath = `${filePath}`;
 
-  // path splitsen en opschonen
-  const parts = filepath.split('/').map((part) => {
-    return part.replace(/(\W)/g, '_').replace(/_{2,}/g, '.').replace(/^_/, '').replace(/_$/, '');
-  });
-
-  let titleParts = [],
-    lastPart;
+  // basepath er af halen, path splitsen en opschonen
+  let parts = filePath.replace(`${basePath}/`, '').split('/').map(makeVariableSafe);
 
   // haal laatste onderdeel er af
-  lastPart = parts.pop();
+  let lastPart = parts.pop();
   lastPart = lastPart.toUpperCase();
 
-  // onderdelen die pad zijn
-  const numberOfPartsWithoutLast = parts.length,
-    numberOfTitleParts = numberOfPartsWithoutLast > 1 ? 2 : 1;
+  // camelcase andere onderdelen
+  parts = parts.map(camelcase);
 
-  for (let i = 0; i < numberOfTitleParts; i++) {
-    titleParts.push(parts.shift());
-  }
+  // haal titel elementen uit base path
+  let titleParts = basePath.split('/');
+  titleParts = titleParts.slice(titleParts.length - (titleParts.length === 1 ? 1 : 2));
+
+  // eerste part wordt onderdeel van titel
+  // if (parts.length > 0) {
+  //   titleParts.push(parts.shift());
+  // }
 
   titleParts.push('sprites');
   titleParts = uppercamelcase(titleParts.join('-'));
 
   if (parts.length > 0) {
-    filepath = parts.join('.');
-    filepath = filepath.replace(/(\W^\.)/g, '').replace(/\.{2,}/g, '.').replace(/^\./, '').replace(/\.$/, '');
-
-    return [titleParts, filepath, lastPart].join('.');
+    filePath = parts.join('.');
+    filePath = filePath.replace(/(\W^\.)/g, '').replace(/\.{2,}/g, '.').replace(/^\./, '').replace(/\.$/, '');
+    return [titleParts, filePath, lastPart].join('.');
   }
   else {
     return [titleParts, lastPart].join('.');
   }
 }
+
 
 function getNumberOfParts(allDataItems) {
   if (allDataItems.length > 0) {
@@ -63,14 +66,19 @@ function getNumberOfParts(allDataItems) {
     return numberOfRelatedPacks + 1;
   }
 
+
   return 0;
 }
 
-function parseAssetData(allAssetData) {
-  const parsedData = {};
+function parseAssetData(allAssetData, assetPath) {
+
+  // bepaal base path
+  const basePath = assetPath,
+    parsedData = {};
+
   for (const assetData of allAssetData || []) {
     for (const framePath of Object.keys(assetData.frames)) {
-      set(parsedData, convertPathToVariableName(framePath), framePath);
+      set(parsedData, convertPathToVariableName(framePath, basePath), framePath);
     }
   }
 
@@ -92,7 +100,6 @@ function getSortedItems(_itemsData) {
 
     return x < y ? -1 : x > y ? 1 : 0;
   });
-
 
   const items = {};
   for (const item of itemsSortable) {
@@ -129,9 +136,15 @@ function generateContents(parsedAssetData, loaderData) {
 
 function getScriptPath(assetPath, scriptDirectory) {
   const assetParts = assetPath.split('/'),
-  assetName = assetParts.pop();
+    assetName = assetParts.pop();
+
+  if (assetParts.length < 2) {
+    assetParts.push(assetName);
+  }
+
   assetPath = assetParts.join('/');
-  return `${path.join(scriptDirectory, assetPath)}/sprites/${assetName}.ts`;
+
+  return `${path.join(scriptDirectory, assetPath)}/assets/sprites-${assetName}.ts`;
 }
 
 export async function generateCode(assetPath, settings, itemOptions) {
@@ -148,7 +161,7 @@ export async function generateCode(assetPath, settings, itemOptions) {
 
   // parse data to object
   const allAssetData = await Promise.all(actions),
-    parsedAssetData = parseAssetData(allAssetData),
+    parsedAssetData = parseAssetData(allAssetData, assetPath),
     loaderInfo = {
       fileName: assetPath,
       numberOfParts: getNumberOfParts(allAssetData)
