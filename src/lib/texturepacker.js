@@ -1,3 +1,5 @@
+import { kebabCase } from './util';
+
 const util = require('util');
 const execProcess = util.promisify(require('child_process').exec);
 
@@ -66,7 +68,7 @@ class TexturePackerCommand {
 
   addOption(option, value) {
     this.commands.push({
-      option: `--${this.kebabCase(option)}`,
+      option: `--${kebabCase(option)}`,
       value
     });
   }
@@ -95,10 +97,5 @@ class TexturePackerCommand {
     }
 
     return `${option}${value}`;
-  }
-
-  // https://gist.github.com/nblackburn/875e6ff75bc8ce171c758bf75f304707
-  kebabCase(text) {
-    return text.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
   }
 }
