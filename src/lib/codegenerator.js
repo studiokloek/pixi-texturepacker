@@ -21,13 +21,16 @@ async function getDataFrom(filepath) {
 function convertPathToVariableName(filepath) {
   filepath = `${filepath}`;
 
-  const parts = filepath.split('/');
+  // path splitsen en opschonen
+  const parts = filepath.split('/').map((part) => {
+    return part.replace(/(\W)/g, '_').replace(/_{2,}/g, '.').replace(/^_/, '').replace(/_$/, '');
+  });
 
   let titleParts = [],
     lastPart;
 
+  // haal laatste onderdeel er af
   lastPart = parts.pop();
-  lastPart = lastPart.replace(/(\W)/g, '_').replace(/_{2,}/g, '.').replace(/^_/, '').replace(/_$/, '');
   lastPart = lastPart.toUpperCase();
 
   // onderdelen die pad zijn
@@ -124,12 +127,19 @@ function generateContents(parsedAssetData, loaderData) {
   return contents;
 }
 
-export async function generateCode(assetpath, settings, itemOptions) {
+function getScriptPath(assetPath, scriptDirectory) {
+  const assetParts = assetPath.split('/'),
+  assetName = assetParts.pop();
+  assetPath = assetParts.join('/');
+  return `${path.join(scriptDirectory, assetPath)}/sprites/${assetName}.ts`;
+}
+
+export async function generateCode(assetPath, settings, itemOptions) {
 
   const scriptDirectory = get(itemOptions, 'scriptDirectory', { default: settings.scriptDirectory });
 
   // read all generated json
-  const paths = await globby(`${path.join(settings.targetDirectory, assetpath)}/*[1-9]+.json`),
+  const paths = await globby(`${path.join(settings.targetDirectory, assetPath)}/*[1-9]+.json`),
     actions = [];
 
   for (const filepath of paths) {
@@ -140,10 +150,12 @@ export async function generateCode(assetpath, settings, itemOptions) {
   const allAssetData = await Promise.all(actions),
     parsedAssetData = parseAssetData(allAssetData),
     loaderInfo = {
-      fileName: assetpath,
+      fileName: assetPath,
       numberOfParts: getNumberOfParts(allAssetData)
     }
 
-  const contents = generateContents(parsedAssetData, loaderInfo);
-  await fs.outputFile(`${path.join(scriptDirectory, assetpath)}/sprites.ts`, contents);
+  const contents = generateContents(parsedAssetData, loaderInfo),
+    scriptpath = getScriptPath(assetPath, scriptDirectory);
+
+  await fs.outputFile(scriptpath, contents);
 }
