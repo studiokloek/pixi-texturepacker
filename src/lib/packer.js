@@ -45,7 +45,7 @@ export async function pack(directory, settings) {
     'sheet': `${path.join(settings.targetDirectory, itemPath, directoryName)}-{n1}{v}.png`,
     'data': `${path.join(settings.targetDirectory, itemPath, directoryName)}-{n1}{v}.json`,
     'replace': `${directoryName}=${itemPath}`,
-    'extrude': get(itemOptions, 'extrude', settings.extrude) ? '2' : '0'
+    'extrude': get(itemOptions, 'extrude', settings.extrude) ? '1' : '0'
   }
 
   const spinner = ora(`Packing ${itemPath}`).start();
