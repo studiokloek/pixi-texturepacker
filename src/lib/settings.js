@@ -19,6 +19,7 @@ export async function readSettingsFrom(_file) {
       targetDirectory: './assets/converted/',
       watch: false,
       watchDelay: 500,
+      extrude: false,
       includeSizeInfo: false,
       directories: []
     });

@@ -1,4 +1,5 @@
 import { kebabCase } from './util';
+const defaults = require('object.defaults');
 
 const util = require('util');
 const execProcess = util.promisify(require('child_process').exec);
@@ -29,7 +30,7 @@ const baseOptions = {
 };
 
 export async function packFolder(path, options) {
-  const command = buildTexturePackerCommand(path, Object.assign(options, baseOptions));
+  const command = buildTexturePackerCommand(path, defaults(options, baseOptions));
 
   try {
     await execProcess(command);
