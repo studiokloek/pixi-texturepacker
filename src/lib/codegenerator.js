@@ -70,7 +70,7 @@ function getNumberOfParts(allDataItems) {
   return 0;
 }
 
-function parseAssetData(allAssetData, assetPath) {
+function parseAssetData(allAssetData, assetPath, includeSizeInfo) {
 
   // bepaal base path
   const basePath = assetPath,
@@ -78,7 +78,21 @@ function parseAssetData(allAssetData, assetPath) {
 
   for (const assetData of allAssetData || []) {
     for (const framePath of Object.keys(assetData.frames)) {
-      set(parsedData, convertPathToVariableName(framePath, basePath), framePath);
+      let assetInfo;
+      if (includeSizeInfo) {
+        // haal frame info op
+        const frameInfo = assetData.frames[framePath];
+        assetInfo = {
+          id: framePath,
+          width: frameInfo.sourceSize.w,
+          height: frameInfo.sourceSize.h,
+        };
+      } else {
+        assetInfo = framePath
+      }
+
+      // haal frame info op
+      set(parsedData, convertPathToVariableName(framePath, basePath), assetInfo);
     }
   }
 
@@ -147,9 +161,10 @@ function getScriptPath(assetPath, scriptDirectory) {
   return `${path.join(scriptDirectory, assetPath)}/assets/sprites-${assetName}.ts`;
 }
 
-export async function generateCode(assetPath, settings, itemOptions) {
 
-  const scriptDirectory = get(itemOptions, 'scriptDirectory', { default: settings.scriptDirectory });
+export async function generateCode(assetPath, settings, itemOptions) {
+  const scriptDirectory = get(itemOptions, 'scriptDirectory', settings.scriptDirectory),
+  includeSizeInfo = get(itemOptions, 'includeSizeInfo', settings.includeSizeInfo);
 
   // read all generated json
   const paths = await globby(`${path.join(settings.targetDirectory, assetPath)}/*[1-9]+.json`),
@@ -159,9 +174,10 @@ export async function generateCode(assetPath, settings, itemOptions) {
     actions.push(getDataFrom(filepath));
   }
 
+
   // parse data to object
   const allAssetData = await Promise.all(actions),
-    parsedAssetData = parseAssetData(allAssetData, assetPath),
+    parsedAssetData = parseAssetData(allAssetData, assetPath, includeSizeInfo),
     loaderInfo = {
       fileName: assetPath,
       numberOfParts: getNumberOfParts(allAssetData)

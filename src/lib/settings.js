@@ -1,6 +1,7 @@
 const ora = require('ora');
 const fs = require('fs-extra');
 const get = require('get-value');
+const defaults = require('object.defaults');
 
 export async function readSettingsFrom(_file) {
   const spinner = ora(`Reading settings from ${_file}...`).start();
@@ -10,14 +11,18 @@ export async function readSettingsFrom(_file) {
   try {
     const data = await fs.readJSON(_file);
 
-    settings = get(data, 'sprites', { default: {
+    settings = get(data, 'sprites', {});
+
+    settings = defaults(settings, {
       sourceDirectory: './assets/',
       scriptDirectory: './assets/converted/',
       targetDirectory: './assets/converted/',
       watch: false,
       watchDelay: 500,
+      includeSizeInfo: false,
       directories: []
-    } });
+    });
+
   } catch (error) {
     spinner.fail(`Could not load settings from ${_file}... (does it exist?)`);
 
