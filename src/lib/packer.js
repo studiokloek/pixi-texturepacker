@@ -6,6 +6,7 @@ const get = require('get-value');
 
 import { packFolder } from './texturepacker';
 import { generateCode } from './codegenerator';
+import { fixSpritesheetScaleMeta } from './util';
 
 const isPacking = {},
   shouldPackAgain = {};
@@ -64,6 +65,8 @@ export async function pack(directory, settings) {
 
     return;
   }
+
+  await fixSpritesheetScaleMeta(`${path.join(settings.targetDirectory, itemPath)}`);
 
   await generateCode(itemPath, settings, itemOptions);
 

@@ -1,12 +1,12 @@
 import { makeVariableSafe } from './util';
 
+const fs = require('fs-extra');
 const get = require('get-value');
 const set = require('set-value');
 const globby = require('globby');
 const pupa = require('pupa');
 const uppercamelcase = require('uppercamelcase');
 const camelcase = require('camelcase');
-const fs = require('fs-extra');
 const path = require('path');
 
 const loaderInfoTemplate = `export default {
@@ -16,10 +16,6 @@ const loaderInfoTemplate = `export default {
 };`;
 
 const assetTemplate = `export const {assetName} = {assetData};`;
-
-async function getDataFrom(filepath) {
-  return await fs.readJson(filepath)
-}
 
 function convertPathToVariableName(filePath, basePath) {
   // forceer string
@@ -164,14 +160,14 @@ function getScriptPath(assetPath, scriptDirectory) {
 
 export async function generateCode(assetPath, settings, itemOptions) {
   const scriptDirectory = get(itemOptions, 'scriptDirectory', settings.scriptDirectory),
-  includeSizeInfo = get(itemOptions, 'includeSizeInfo', settings.includeSizeInfo);
+    includeSizeInfo = get(itemOptions, 'includeSizeInfo', settings.includeSizeInfo);
 
   // read all generated json
   const paths = await globby(`${path.join(settings.targetDirectory, assetPath)}/*[1-9]+.json`),
     actions = [];
 
   for (const filepath of paths) {
-    actions.push(getDataFrom(filepath));
+    actions.push(await fs.readJson(filepath));
   }
 
 

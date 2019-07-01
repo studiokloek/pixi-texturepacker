@@ -34,7 +34,6 @@ export async function readSettingsFrom(_file) {
 
   if (numberOfDirectories) {
     spinner.succeed(`Found ${numberOfDirectories} directories to process...`);
-
   } else {
     spinner.fail(`Found no directories to process...`);
   }
