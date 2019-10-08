@@ -10,6 +10,7 @@ const camelcase = require('camelcase');
 const path = require('path');
 
 const loaderInfoTemplate = `export default {
+  assets: {assetsVariable},
   fileName : '{fileName}',
   numberOfParts : {numberOfParts},
   type: 'sprites'
@@ -108,7 +109,7 @@ function getSortedItems(_itemsData) {
     const x = a[0],
       y = b[0];
 
-    return x < y ? -1 : x > y ? 1 : 0;
+    return x < y ? -1 : (x > y ? 1 : 0);
   });
 
   const items = {};
@@ -122,21 +123,20 @@ function getSortedItems(_itemsData) {
 function generateContents(parsedAssetData, loaderData) {
   let contents = '';
 
-  // assets
-  for (const assetName of Object.keys(parsedAssetData)) {
-    const items = getSortedItems(parsedAssetData[assetName]);
+  const assetName = Object.keys(parsedAssetData)[0];
+  const items = getSortedItems(parsedAssetData[assetName]);
 
-    let itemsContent = JSON.stringify(items, null, 2);
-    itemsContent = itemsContent.replace(/"([^(")"]+)":/g, "$1:");
+  let itemsContent = JSON.stringify(items, null, 2);
+  itemsContent = itemsContent.replace(/"([^(")"]+)":/g, "$1:");
 
-    contents = `${contents}${pupa(assetTemplate, {
-      assetName: assetName,
-      assetData: itemsContent
-    })}\n`;
-  }
+  contents = `${contents}${pupa(assetTemplate, {
+    assetName: assetName,
+    assetData: itemsContent
+  })}\n`;
 
   // loader
   contents = `${contents}${pupa(loaderInfoTemplate, {
+    assetsVariable: assetName,
     fileName: loaderData.fileName,
     numberOfParts: loaderData.numberOfParts
   })}\n`;
