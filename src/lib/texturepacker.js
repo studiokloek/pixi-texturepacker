@@ -48,6 +48,10 @@ export async function packFolder(path, options) {
 function buildTexturePackerCommand(path, options) {
   options = options || {};
 
+  if (options.extrude === '1') {
+    options['shape-padding'] = 0;
+  }
+
   const command = new TexturePackerCommand();
   command.addPath(`${path}`);
   Object.keys(options).forEach(option => {
