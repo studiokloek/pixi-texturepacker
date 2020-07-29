@@ -7,6 +7,7 @@ const execProcess = util.promisify(require('child_process').exec);
 const baseOptions = {
   'format': 'pixijs4',
   'texture-format': 'png',
+  'jpg-quality': 100,
   'png-opt-level':0,
   'opt':'RGBA8888',
   'prepend-folder-name': true,

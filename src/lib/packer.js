@@ -42,12 +42,14 @@ export async function pack(directory, settings) {
 
   isPacking[itemPath] = true;
 
-  const options = {
-    'sheet': `${path.join(settings.targetDirectory, itemPath, directoryName)}-{n1}{v}.png`,
-    'data': `${path.join(settings.targetDirectory, itemPath, directoryName)}-{n1}{v}.json`,
-    'replace': `${directoryName}=${itemPath}`,
-    'extrude': get(itemOptions, 'extrude', settings.extrude) ? '1' : '0'
-  }
+  const textureFormat = get(itemOptions, 'textureFormat', settings.textureFormat),
+    options = {
+      'sheet': `${path.join(settings.targetDirectory, itemPath, directoryName)}-{n1}{v}.${textureFormat}`,
+      'data': `${path.join(settings.targetDirectory, itemPath, directoryName)}-{n1}{v}.json`,
+      'replace': `${directoryName}=${itemPath}`,
+      'extrude': get(itemOptions, 'extrude', settings.extrude) ? '1' : '0',
+      'texture-format': textureFormat,
+    }
 
   const spinner = ora(`Packing ${itemPath}`).start();
 
