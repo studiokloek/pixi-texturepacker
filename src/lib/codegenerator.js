@@ -67,7 +67,68 @@ function getNumberOfParts(allDataItems) {
   return 0;
 }
 
-function parseAssetData(allAssetData, assetPath, includeSizeInfo) {
+async function getAssetMetaData(allAssetData, assetPath, settings, itemOptions) {
+  const includeSizeInfo = get(itemOptions, 'includeSizeInfo', settings.includeSizeInfo),
+  includePNGExpressMetadata = get(itemOptions, 'includePNGExpressMetadata', settings.includePNGExpressMetadata);
+
+  const AssetMetaData = {}
+  if (!includeSizeInfo || !includePNGExpressMetadata) {
+    return AssetMetaData;
+  }
+  
+  // check for PNGExpress meta data file?
+  if (includePNGExpressMetadata) {
+    try {
+      const metaDataFile = `${path.join(settings.sourceDirectory, assetPath)}/pngexpress-metadata.json`;
+      
+      if (fs.existsSync(metaDataFile)) {
+        const metaFromFile = await fs.readJson(metaDataFile);
+        for (const assetInfo of metaFromFile.assets) {
+          for (const state of assetInfo.states) {
+            // get asset id
+            let id = assetPath + assetInfo.id;
+
+            // remove starting slash
+            id = (id[0] === '/') ? id.slice(1) : id;
+
+            // add state
+            id = state === 'default' ? id : id + state;
+
+            const meta = {
+              ...assetInfo,
+            }
+
+            delete meta.id;
+            delete meta.states;
+
+            AssetMetaData[id] = meta;
+          }
+        }
+
+        return AssetMetaData;
+      }
+    } catch(error) { 
+      console.log(error) 
+    }
+  }
+
+  for (const textureInfo of allAssetData || []) {
+    for (const textureFramePath of Object.keys(textureInfo.frames)) {
+      const frameInfo = textureInfo.frames[textureFramePath];
+      
+      allAssetData[textureFramePath] = {
+        id: textureFramePath,
+        width: frameInfo.sourceSize.w,
+        height: frameInfo.sourceSize.h,
+      }  
+    }
+  }
+
+  return AssetMetaData;
+}
+
+async function parseAssetData(allAssetData, assetPath, settings, itemOptions) {
+  const AssetMetaData = await getAssetMetaData(allAssetData, assetPath, settings, itemOptions);
 
   // bepaal base path
   const basePath = assetPath,
@@ -75,20 +136,17 @@ function parseAssetData(allAssetData, assetPath, includeSizeInfo) {
 
   for (const assetData of allAssetData || []) {
     for (const framePath of Object.keys(assetData.frames)) {
-      let assetInfo;
-      if (includeSizeInfo) {
-        // haal frame info op
-        const frameInfo = assetData.frames[framePath];
+      // always use framepath as info
+      let assetInfo = framePath;
+
+      // get and set asset meta info
+      if (AssetMetaData[framePath]) {
         assetInfo = {
           id: framePath,
-          width: frameInfo.sourceSize.w,
-          height: frameInfo.sourceSize.h,
-        };
-      } else {
-        assetInfo = framePath
+          ...AssetMetaData[framePath]
+        }
       }
 
-      // haal frame info op
       set(parsedData, convertPathToVariableName(framePath, basePath), assetInfo);
     }
   }
@@ -127,7 +185,7 @@ function generateContents(parsedAssetData, loaderData) {
   const items = getSortedItems(parsedAssetData[assetName]);
 
   let itemsContent = JSON.stringify(items, null, 2);
-  itemsContent = itemsContent.replace(/"([^(")"]+)":/g, "$1:");
+  itemsContent = itemsContent.replace(/"([^"()]+)":/g, "$1:");
 
   contents = `${contents}${pupa(assetTemplate, {
     assetName: assetName,
@@ -159,25 +217,24 @@ function getScriptPath(assetPath, scriptDirectory) {
 
 
 export async function generateCode(assetPath, settings, itemOptions) {
-  const scriptDirectory = get(itemOptions, 'scriptDirectory', settings.scriptDirectory),
-    includeSizeInfo = get(itemOptions, 'includeSizeInfo', settings.includeSizeInfo);
+  const scriptDirectory = get(itemOptions, 'scriptDirectory', settings.scriptDirectory);
 
   // read all generated json
   const paths = await globby(`${path.join(settings.targetDirectory, assetPath)}/*[1-9]+.json`),
     actions = [];
 
   for (const filepath of paths) {
-    actions.push(await fs.readJson(filepath));
+    actions.push(fs.readJson(filepath));
   }
 
-
   // parse data to object
-  const allAssetData = await Promise.all(actions),
-    parsedAssetData = parseAssetData(allAssetData, assetPath, includeSizeInfo),
+  const allTextureInfo = await Promise.all(actions);
+
+  const parsedAssetData = await parseAssetData(allTextureInfo, assetPath, settings, itemOptions),
     loaderInfo = {
       fileName: assetPath,
-      numberOfParts: getNumberOfParts(allAssetData)
-    }
+      numberOfParts: getNumberOfParts(allTextureInfo)
+    };
 
   const contents = generateContents(parsedAssetData, loaderInfo),
     scriptpath = getScriptPath(assetPath, scriptDirectory);

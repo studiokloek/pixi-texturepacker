@@ -22,10 +22,11 @@ export async function readSettingsFrom(_file) {
       extrude: false,
       textureFormat: 'png',
       includeSizeInfo: false,
+      includePNGExpressMetadata: false,
       directories: []
     });
 
-  } catch (error) {
+  } catch  {
     spinner.fail(`Could not load settings from ${_file}... (does it exist?)`);
 
     return settings;
