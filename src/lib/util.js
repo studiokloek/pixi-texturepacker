@@ -8,16 +8,16 @@ export function makeVariableSafe(value) {
 
 export function kebabCase(value) {
   return value
-    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/([\da-z])([A-Z])/g, '$1-$2')
     .replace(/([A-Z])([A-Z])(?=[a-z])/g, '$1-$2')
     .toLowerCase();
 }
 
 export function getResolutionOfUrl(url, defaultValue) {
-  const resolution = /@([0-9.]+)x/.exec(url);
+  const resolution = /@([\d.]+)x/.exec(url);
 
   if (resolution) {
-    return parseFloat(resolution[1]);
+    return Number.parseFloat(resolution[1]);
   }
 
   return defaultValue !== undefined ? defaultValue : 1;

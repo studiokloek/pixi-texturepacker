@@ -25,10 +25,8 @@ export async function readSettingsFrom(_file) {
       includePNGExpressMetadata: false,
       directories: []
     });
-
-  } catch  {
+  } catch {
     spinner.fail(`Could not load settings from ${_file}... (does it exist?)`);
-
     return settings;
   }
 

@@ -96,11 +96,7 @@ class TexturePackerCommand {
       return value.map(v => this.resolveValue(option, v)).join(' ');
     }
 
-    if (value === true) {
-      value = '';
-    } else {
-      value = ` ${value}`
-    }
+    value = value === true ? '' : ` ${value}`;
 
     return `${option}${value}`;
   }
