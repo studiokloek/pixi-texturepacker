@@ -1,5 +1,6 @@
 import { makeVariableSafe } from './util';
 
+const findUp = require('find-up');
 const fs = require('fs-extra');
 const get = require('get-value');
 const set = require('set-value');
@@ -23,14 +24,14 @@ function convertPathToVariableName(filePath, basePath) {
   filePath = `${filePath}`;
 
   // basepath er af halen, path splitsen en opschonen
-  let parts = filePath.replace(`${basePath}/`, '').split('/').map(makeVariableSafe);
+  let parts = filePath.replace(`${basePath}/`, '').split('/').map(value => makeVariableSafe(value));
 
   // haal laatste onderdeel er af
   let lastPart = parts.pop();
   lastPart = lastPart.toUpperCase();
 
   // camelcase andere onderdelen
-  parts = parts.map(camelcase);
+  parts = parts.map(part => camelcase(part));
 
   // haal titel elementen uit base path
   let titleParts = basePath.split('/');
@@ -72,21 +73,23 @@ async function getAssetMetaData(allAssetData, assetPath, settings, itemOptions) 
   includePNGExpressMetadata = get(itemOptions, 'includePNGExpressMetadata', settings.includePNGExpressMetadata);
 
   const AssetMetaData = {}
-  if (!includeSizeInfo || !includePNGExpressMetadata) {
+  if (!includeSizeInfo && !includePNGExpressMetadata) {
     return AssetMetaData;
   }
   
   // check for PNGExpress meta data file?
   if (includePNGExpressMetadata) {
     try {
-      const metaDataFile = `${path.join(settings.sourceDirectory, assetPath)}/pngexpress-metadata.json`;
+      const metaDataFile = await findUp('pngexpress-metadata.json', {cwd:path.join(settings.sourceDirectory, assetPath), type:'file'}) 
       
-      if (fs.existsSync(metaDataFile)) {
-        const metaFromFile = await fs.readJson(metaDataFile);
+      if (metaDataFile) {
+        const relativePath = `${path.relative(metaDataFile, path.join(settings.sourceDirectory, assetPath)).replace('../', '')}/`,
+          metaFromFile = await fs.readJson(metaDataFile);
+
         for (const assetInfo of metaFromFile.assets) {
-          for (const state of assetInfo.states) {
-            // get asset id
-            let id = assetPath + assetInfo.id;
+          for (const state of assetInfo.states) {            
+            // get asset id, remove ducplicate part of path
+            let id = assetPath + assetInfo.id.replace(relativePath, '');
 
             // remove starting slash
             id = (id[0] === '/') ? id.slice(1) : id;
@@ -116,7 +119,7 @@ async function getAssetMetaData(allAssetData, assetPath, settings, itemOptions) 
     for (const textureFramePath of Object.keys(textureInfo.frames)) {
       const frameInfo = textureInfo.frames[textureFramePath];
       
-      allAssetData[textureFramePath] = {
+      AssetMetaData[textureFramePath] = {
         id: textureFramePath,
         width: frameInfo.sourceSize.w,
         height: frameInfo.sourceSize.h,
@@ -158,7 +161,7 @@ function getSortedItems(_itemsData) {
   const itemsSortable = [];
 
   for (const assetName of Object.keys(_itemsData)) {
-    if (_itemsData.hasOwnProperty(assetName)) {
+    if (Object.prototype.hasOwnProperty.call(_itemsData, assetName)) {
       itemsSortable.push([assetName, _itemsData[assetName]]);
     }
   }
@@ -184,7 +187,7 @@ function generateContents(parsedAssetData, loaderData) {
   const assetName = Object.keys(parsedAssetData)[0];
   const items = getSortedItems(parsedAssetData[assetName]);
 
-  let itemsContent = JSON.stringify(items, null, 2);
+  let itemsContent = JSON.stringify(items, undefined, 2);
   itemsContent = itemsContent.replace(/"([^"()]+)":/g, "$1:");
 
   contents = `${contents}${pupa(assetTemplate, {
