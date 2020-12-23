@@ -228,7 +228,6 @@ export async function generateCode(assetPath, settings, itemOptions) {
 
   for (const filepath of paths) {
     actions.push(fs.readJson(filepath));
-    console.log(filepath)
   }
 
   // parse data to object
