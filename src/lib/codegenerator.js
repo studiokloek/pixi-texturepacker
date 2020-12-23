@@ -223,11 +223,12 @@ export async function generateCode(assetPath, settings, itemOptions) {
   const scriptDirectory = get(itemOptions, 'scriptDirectory', settings.scriptDirectory);
 
   // read all generated json
-  const paths = await globby(`${path.join(settings.targetDirectory, assetPath)}/*[1-9]+.json`),
+  const paths = await globby(`${path.join(settings.targetDirectory, assetPath)}/*[0-9]+.json`),
     actions = [];
 
   for (const filepath of paths) {
     actions.push(fs.readJson(filepath));
+    console.log(filepath)
   }
 
   // parse data to object
