@@ -1,6 +1,6 @@
-import globby from "globby";
-import set from "set-value";
-import fs from "fs";
+import globby from 'globby';
+import set from 'set-value';
+import fs from 'fs-extra';
 
 export function makeVariableSafe(value) {
   return value.replace(/(\W)/g, '_').replace(/_{2,}/g, '.').replace(/^_/, '').replace(/_$/, '');

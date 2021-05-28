@@ -5,7 +5,7 @@ import globby from 'globby';
 import upperCamelCase from 'uppercamelcase';
 import { makeVariableSafe } from './util';
 import path from 'path';
-import fs from 'fs';
+import fs from 'fs-extra';
 import set from 'set-value';
 import pupa from 'pupa';
 

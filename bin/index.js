@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-'use strict';
-const meow = require('meow');
-const {pack} = require('../dist');
+import meow from 'meow';
+import { pack } from '../dist/index.js';
 
 const cli = meow(`
 	Usage
@@ -9,6 +8,8 @@ const cli = meow(`
 
 	Examples
 	  $ pixi-texturepacker assets.json
-`);
+`, {
+	importMeta: import.meta,
+});
 
 pack(cli.input[0]);
