@@ -1,18 +1,15 @@
-import get from 'get-value';
-import ora from 'ora';
 import fs from 'fs-extra';
+import get from 'get-value';
 import defaults from 'object.defaults/mutable.js';
-import {fileURLToPath} from 'url';
+import ora from 'ora';
 
 export async function readSettingsFrom(_file) {
   const spinner = ora(`Reading settings from ${_file}...`).start();
 
   let settings = {};
 
-  const filePath = fileURLToPath(new URL(_file, import.meta.url));
-
   try {
-    const data = await fs.readJSON(filePath);
+    const data = await fs.readJSON(_file);
 
     settings = get(data, 'sprites', {});
     
