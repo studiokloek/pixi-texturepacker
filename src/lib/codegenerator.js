@@ -10,7 +10,7 @@ import set from 'set-value';
 import pupa from 'pupa';
 
 
-const loaderInfoTemplate = `export const {assetsVariable}LoaderInfo {
+const loaderInfoTemplate = `export const {assetsVariable}LoaderInfo = {
   assets: {assetsVariable},
   fileName : '{fileName}',
   numberOfParts : {numberOfParts},
