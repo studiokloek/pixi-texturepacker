@@ -1,10 +1,9 @@
+import chalk from 'chalk';
+import logSymbols from 'log-symbols';
+import path from 'path';
+import sane from 'sane';
+import { debounce } from 'throttle-debounce';
 import { pack } from './packer';
-
-const sane = require('sane');
-const logSymbols = require('log-symbols');
-const chalk = require('chalk');
-const { debounce } = require('throttle-debounce');
-const path = require('path');
 
 export async function watch(directories, settings) {
   for (const directory of directories) {

@@ -1,6 +1,6 @@
-const fs = require('fs-extra');
-const set = require('set-value');
-const globby = require('globby');
+import globby from "globby";
+import set from "set-value";
+import fs from "fs";
 
 export function makeVariableSafe(value) {
   return value.replace(/(\W)/g, '_').replace(/_{2,}/g, '.').replace(/^_/, '').replace(/_$/, '');

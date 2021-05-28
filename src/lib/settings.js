@@ -1,7 +1,6 @@
-const ora = require('ora');
-const fs = require('fs-extra');
-const get = require('get-value');
-const defaults = require('object.defaults');
+import get from "get-value";
+import ora from "ora";
+import fs from "fs";
 
 export async function readSettingsFrom(_file) {
   const spinner = ora(`Reading settings from ${_file}...`).start();
@@ -13,7 +12,7 @@ export async function readSettingsFrom(_file) {
 
     settings = get(data, 'sprites', {});
 
-    settings = defaults(settings, {
+    settings = objectDefaults(settings, {
       sourceDirectory: './assets/',
       scriptDirectory: './assets/converted/',
       targetDirectory: './assets/converted/',
@@ -40,3 +39,5 @@ export async function readSettingsFrom(_file) {
 
   return settings;
 }
+
+

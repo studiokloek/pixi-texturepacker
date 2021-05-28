@@ -1,8 +1,8 @@
 import { kebabCase } from './util';
-const defaults = require('object.defaults');
-
-const util = require('util');
-const execProcess = util.promisify(require('child_process').exec);
+import defaults from 'object.defaults/mutable.js';
+import { promisify } from 'util';
+import { exec } from 'child_process';
+const execProcess = promisify(exec);
 
 const baseOptions = {
   'format': 'pixijs4',
@@ -55,9 +55,9 @@ function buildTexturePackerCommand(path, options) {
 
   const command = new TexturePackerCommand();
   command.addPath(`${path}`);
-  Object.keys(options).forEach(option => {
+  for (const option of Object.keys(options)) {
     command.addOption(option, options[option]);
-  });
+  }
 
   return command.build();
 }

@@ -1,16 +1,16 @@
+import camelcase from 'camelcase';
+import findUp from 'find-up';
+import get from 'get-value';
+import globby from 'globby';
+import upperCamelCase from 'uppercamelcase';
 import { makeVariableSafe } from './util';
+import path from 'path';
+import fs from 'fs';
+import set from 'set-value';
+import pupa from 'pupa';
 
-const findUp = require('find-up');
-const fs = require('fs-extra');
-const get = require('get-value');
-const set = require('set-value');
-const globby = require('globby');
-const pupa = require('pupa');
-const uppercamelcase = require('uppercamelcase');
-const camelcase = require('camelcase');
-const path = require('path');
 
-const loaderInfoTemplate = `export default {
+const loaderInfoTemplate = `export const {assetsVariable}LoaderInfo {
   assets: {assetsVariable},
   fileName : '{fileName}',
   numberOfParts : {numberOfParts},
@@ -43,7 +43,7 @@ function convertPathToVariableName(filePath, basePath) {
   // }
 
   titleParts.push('sprites');
-  titleParts = uppercamelcase(titleParts.join('-'));
+  titleParts = upperCamelCase(titleParts.join('-'));
 
   if (parts.length > 0) {
     filePath = parts.join('.');

@@ -1,11 +1,10 @@
-const ora = require('ora');
-const logSymbols = require('log-symbols');
-const chalk = require('chalk');
-const path = require('path');
-const get = require('get-value');
-
-import { packFolder } from './texturepacker';
+import chalk from 'chalk';
+import get from 'get-value';
+import logSymbols from 'log-symbols';
+import ora from 'ora';
+import path from 'path';
 import { generateCode } from './codegenerator';
+import { packFolder } from './texturepacker';
 import { fixSpritesheetScaleMeta } from './util';
 
 const isPacking = {},
