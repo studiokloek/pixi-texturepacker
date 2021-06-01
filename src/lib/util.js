@@ -1,6 +1,7 @@
 import globby from 'globby';
 import set from 'set-value';
 import fs from 'fs-extra';
+import get from 'get-value';
 
 export function makeVariableSafe(value) {
   return value.replace(/(\W)/g, '_').replace(/_{2,}/g, '.').replace(/^_/, '').replace(/_$/, '');
@@ -27,6 +28,7 @@ export async function fixSpritesheetJSON(jsonPath) {
   // get all generated json
   const paths = await globby(`${jsonPath}/*.json`);
 
+
   for (const filepath of paths) {
     // get resolution from filename
     const resolution = getResolutionOfUrl(filepath);
@@ -36,9 +38,10 @@ export async function fixSpritesheetJSON(jsonPath) {
 
     // set scale value to resolution
     set(data, 'meta.scale', resolution);
-
+      
     // unset related_multi_packs value so pixi won't choke
-    set(data, 'meta.related_multi_packs', []);
+    set(data, 'meta.number_of_packs', get(data, 'meta.related_multi_packs', { default: [] }).length + 1);
+    set(data, 'meta.related_multi_packs');
 
     // write contents back to file
     await fs.writeJson(filepath, data);

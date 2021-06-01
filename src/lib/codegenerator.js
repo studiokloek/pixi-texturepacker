@@ -58,12 +58,10 @@ function convertPathToVariableName(filePath, basePath) {
 
 function getNumberOfParts(allDataItems) {
   if (allDataItems.length > 0) {
-    const firstItem = allDataItems[0],
-      numberOfRelatedPacks = get(firstItem, 'meta.related_multi_packs', { default: [] }).length;
+    const firstItem = allDataItems[0];
 
-    return numberOfRelatedPacks + 1;
+    return get(firstItem, 'meta.number_of_packs', { default: 1 });
   }
-
 
   return 0;
 }
