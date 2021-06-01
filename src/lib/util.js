@@ -23,7 +23,7 @@ export function getResolutionOfUrl(url, defaultValue) {
   return defaultValue !== undefined ? defaultValue : 1;
 }
 
-export async function fixSpritesheetScaleMeta(jsonPath) {
+export async function fixSpritesheetJSON(jsonPath) {
   // get all generated json
   const paths = await globby(`${jsonPath}/*.json`);
 
@@ -36,6 +36,9 @@ export async function fixSpritesheetScaleMeta(jsonPath) {
 
     // set scale value to resolution
     set(data, 'meta.scale', resolution);
+
+    // unset related_multi_packs value so pixi won't choke
+    set(data, 'meta.related_multi_packs', []);
 
     // write contents back to file
     await fs.writeJson(filepath, data);

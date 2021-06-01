@@ -5,7 +5,7 @@ import ora from 'ora';
 import path from 'path';
 import { generateCode } from './codegenerator';
 import { packFolder } from './texturepacker';
-import { fixSpritesheetScaleMeta } from './util';
+import { fixSpritesheetJSON } from './util';
 
 const isPacking = {},
   shouldPackAgain = {};
@@ -67,7 +67,7 @@ export async function pack(directory, settings) {
     return;
   }
 
-  await fixSpritesheetScaleMeta(`${path.join(settings.targetDirectory, itemPath)}`);
+  await fixSpritesheetJSON(`${path.join(settings.targetDirectory, itemPath)}`);
 
   await generateCode(itemPath, settings, itemOptions);
 
