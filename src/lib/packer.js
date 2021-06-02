@@ -45,7 +45,7 @@ export async function pack(directory, settings) {
     options = {
       'sheet': `${path.join(settings.targetDirectory, itemPath, directoryName)}-{n1}{v}.${textureFormat}`,
       'data': `${path.join(settings.targetDirectory, itemPath, directoryName)}-{n1}{v}.json`,
-      'replace': `${directoryName}=${itemPath}`,
+      'replace': `^${directoryName}=${itemPath}`,
       'extrude': get(itemOptions, 'extrude', settings.extrude) ? '1' : '0',
       'texture-format': textureFormat,
     }
