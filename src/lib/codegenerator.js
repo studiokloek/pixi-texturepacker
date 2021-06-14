@@ -37,11 +37,6 @@ function convertPathToVariableName(filePath, basePath) {
   let titleParts = basePath.split('/');
   titleParts = titleParts.slice(titleParts.length - (titleParts.length === 1 ? 1 : 2));
 
-  // eerste part wordt onderdeel van titel
-  // if (parts.length > 0) {
-  //   titleParts.push(parts.shift());
-  // }
-
   titleParts.push('sprites');
   titleParts = upperCamelCase(titleParts.join('-'));
 
@@ -54,7 +49,6 @@ function convertPathToVariableName(filePath, basePath) {
     return [titleParts, lastPart].join('.');
   }
 }
-
 
 function getNumberOfParts(allDataItems) {
   if (allDataItems.length > 0) {
@@ -74,12 +68,12 @@ async function getAssetMetaData(allAssetData, assetPath, settings, itemOptions) 
   if (!includeSizeInfo && !includePNGExpressMetadata) {
     return AssetMetaData;
   }
-  
+
   // check for PNGExpress meta data file?
   if (includePNGExpressMetadata) {
     try {
       const metaDataFile = await findUp('pngexpress-metadata.json', {cwd:path.join(settings.sourceDirectory, assetPath), type:'file'}) 
-      
+
       if (metaDataFile) {
         const relativePath = `${path.relative(metaDataFile, path.join(settings.sourceDirectory, assetPath)).replace('../', '')}/`,
           metaFromFile = await fs.readJson(metaDataFile);
@@ -116,7 +110,7 @@ async function getAssetMetaData(allAssetData, assetPath, settings, itemOptions) 
   for (const textureInfo of allAssetData || []) {
     for (const textureFramePath of Object.keys(textureInfo.frames)) {
       const frameInfo = textureInfo.frames[textureFramePath];
-      
+
       AssetMetaData[textureFramePath] = {
         id: textureFramePath,
         width: frameInfo.sourceSize.w,

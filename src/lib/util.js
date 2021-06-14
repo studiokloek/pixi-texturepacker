@@ -24,10 +24,20 @@ export function getResolutionOfUrl(url, defaultValue) {
   return defaultValue !== undefined ? defaultValue : 1;
 }
 
+function getNumberOfPacks(data) {
+  // did we allready determine the number of packs in a previous run?
+  let numberOfPacks = get(data, 'meta.number_of_packs', { default: 0 });
+  
+  if (numberOfPacks === 0) {
+    numberOfPacks = get(data, 'meta.related_multi_packs', { default: [] }).length + 1;
+  }
+
+  return numberOfPacks;
+}
+
 export async function fixSpritesheetJSON(jsonPath) {
   // get all generated json
   const paths = await globby(`${jsonPath}/*.json`);
-
 
   for (const filepath of paths) {
     // get resolution from filename
@@ -38,9 +48,11 @@ export async function fixSpritesheetJSON(jsonPath) {
 
     // set scale value to resolution
     set(data, 'meta.scale', resolution);
-      
+
+    // determine number of packs
+    set(data, 'meta.number_of_packs', getNumberOfPacks(data));
+
     // unset related_multi_packs value so pixi won't choke
-    set(data, 'meta.number_of_packs', get(data, 'meta.related_multi_packs', { default: [] }).length + 1);
     set(data, 'meta.related_multi_packs');
 
     // write contents back to file
