@@ -1,13 +1,15 @@
 import camelcase from 'camelcase';
+import chalk from 'chalk';
 import findUp from 'find-up';
+import fs from 'fs-extra';
 import get from 'get-value';
 import globby from 'globby';
+import logSymbols from 'log-symbols';
+import path from 'path';
+import pupa from 'pupa';
+import set from 'set-value';
 import upperCamelCase from 'uppercamelcase';
 import { makeVariableSafe } from './util';
-import path from 'path';
-import fs from 'fs-extra';
-import set from 'set-value';
-import pupa from 'pupa';
 
 
 const loaderInfoTemplate = `export const {assetsVariable}LoaderInfo = {
@@ -123,8 +125,9 @@ async function getAssetMetaData(allAssetData, assetPath, settings, itemOptions) 
 }
 
 async function parseAssetData(allAssetData, assetPath, settings, itemOptions) {
-  const AssetMetaData = await getAssetMetaData(allAssetData, assetPath, settings, itemOptions);
-
+  const AssetMetaData = await getAssetMetaData(allAssetData, assetPath, settings, itemOptions),
+   includeSizeInfo = get(itemOptions, 'includeSizeInfo', settings.includeSizeInfo),
+  includePNGExpressMetadata = get(itemOptions, 'includePNGExpressMetadata', settings.includePNGExpressMetadata);
   // bepaal base path
   const basePath = assetPath,
     parsedData = {};
@@ -135,10 +138,15 @@ async function parseAssetData(allAssetData, assetPath, settings, itemOptions) {
       let assetInfo = framePath;
 
       // get and set asset meta info
-      if (AssetMetaData[framePath]) {
-        assetInfo = {
-          id: framePath,
-          ...AssetMetaData[framePath]
+      if (includeSizeInfo || includePNGExpressMetadata) {
+        if (AssetMetaData[framePath]) {
+          assetInfo = {
+            id: framePath,
+            ...AssetMetaData[framePath]
+          }
+        } else {
+          // warn, no asset info found
+          console.log('\n',logSymbols.warning, chalk.yellow(`Could not find asset info for ${framePath}, check the export filename.`), '\n');
         }
       }
 
