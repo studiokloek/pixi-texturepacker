@@ -1,9 +1,9 @@
 import camelcase from 'camelcase';
 import chalk from 'chalk';
-import findUp from 'find-up';
+import { findUp }  from 'find-up';
 import fs from 'fs-extra';
 import get from 'get-value';
-import globby from 'globby';
+import { globby } from 'globby';
 import logSymbols from 'log-symbols';
 import path from 'path';
 import pupa from 'pupa';
@@ -128,6 +128,7 @@ async function parseAssetData(allAssetData, assetPath, settings, itemOptions) {
   const AssetMetaData = await getAssetMetaData(allAssetData, assetPath, settings, itemOptions),
    includeSizeInfo = get(itemOptions, 'includeSizeInfo', settings.includeSizeInfo),
   includePNGExpressMetadata = get(itemOptions, 'includePNGExpressMetadata', settings.includePNGExpressMetadata);
+ 
   // bepaal base path
   const basePath = assetPath,
     parsedData = {};
@@ -136,7 +137,9 @@ async function parseAssetData(allAssetData, assetPath, settings, itemOptions) {
     for (const framePath of Object.keys(assetData.frames)) {
       // always use framepath as info
       let assetInfo = framePath;
+      
 
+      
       // get and set asset meta info
       if (includeSizeInfo || includePNGExpressMetadata) {
         if (AssetMetaData[framePath]) {
@@ -148,6 +151,11 @@ async function parseAssetData(allAssetData, assetPath, settings, itemOptions) {
           // warn, no asset info found
           console.log('\n',logSymbols.warning, chalk.yellow(`Could not find asset info for ${framePath}, check the export filename.`), '\n');
         }
+      }
+
+
+      if (framePath.includes('eiland')) {
+        console.log('build', convertPathToVariableName(framePath, basePath), assetInfo)
       }
 
       set(parsedData, convertPathToVariableName(framePath, basePath), assetInfo);

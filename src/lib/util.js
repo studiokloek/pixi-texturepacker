@@ -1,4 +1,4 @@
-import globby from 'globby';
+import { globby } from 'globby';
 import set from 'set-value';
 import fs from 'fs-extra';
 import get from 'get-value';
