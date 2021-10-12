@@ -30,29 +30,29 @@
     "pixi-texturepacker": "./bin/index.js"
   },
   "devDependencies": {
-    "@rollup/plugin-run": "^2.0.2",
-    "eslint": "^7.28.0",
+    "@rollup/plugin-run": "^2.1.0",
+    "eslint": "^8.0.0",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-unicorn": "^32.0.1",
+    "eslint-plugin-unicorn": "^37.0.1",
     "np": "^7.5.0",
-    "rollup": "^2.51.2",
+    "rollup": "^2.58.0",
     "rollup-plugin-terser": "^7.0.2",
-    "source-map-support": "^0.5.19"
+    "source-map-support": "^0.5.20"
   },
   "dependencies": {
     "camelcase": "^6.2.0",
-    "chalk": "^4.1.1",
-    "find-up": "^5.0.0",
+    "chalk": "^4.1.2",
+    "find-up": "^6.2.0",
     "fs-extra": "^10.0.0",
     "get-value": "^3.0.1",
-    "globby": "^11.0.3",
+    "globby": "^12.0.2",
     "log-symbols": "^5.0.0",
-    "meow": "^10.0.1",
+    "meow": "^10.1.1",
     "object.defaults": "^1.1.0",
-    "ora": "^5.4.1",
-    "pupa": "^2.1.1",
-    "sane": "^4.1.0",
-    "set-value": "^4.0.0",
+    "ora": "^6.0.1",
+    "pupa": "^3.1.0",
+    "sane": "^5.0.1",
+    "set-value": "^4.1.0",
     "throttle-debounce": "^3.0.1",
     "uppercamelcase": "^3.0.0"
   }
