@@ -53,6 +53,10 @@ function buildTexturePackerCommand(path, options) {
     options['shape-padding'] = 0;
   }
 
+  if (options['texture-format'] === 'jpg') {
+    options['alpha-handling'] = 'ReduceBorderArtifacts';
+  }
+
   const command = new TexturePackerCommand();
   command.addPath(`${path}`);
   Object.keys(options).forEach(option => {
