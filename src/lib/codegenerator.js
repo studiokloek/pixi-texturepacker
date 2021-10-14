@@ -9,6 +9,7 @@ import path from 'path';
 import pupa from 'pupa';
 import set from 'set-value';
 import upperCamelCase from 'uppercamelcase';
+import pick from 'object.pick';
 import { makeVariableSafe } from './util';
 
 
@@ -66,9 +67,22 @@ async function getAssetMetaData(allAssetData, assetPath, settings, itemOptions) 
   const includeSizeInfo = get(itemOptions, 'includeSizeInfo', settings.includeSizeInfo),
   includePNGExpressMetadata = get(itemOptions, 'includePNGExpressMetadata', settings.includePNGExpressMetadata);
 
-  const AssetMetaData = {}
+  const assetMetaData = {}
   if (!includeSizeInfo && !includePNGExpressMetadata) {
-    return AssetMetaData;
+    return assetMetaData;
+  }
+
+  // basis meta data
+  for (const textureInfo of allAssetData || []) {
+    for (const textureFramePath of Object.keys(textureInfo.frames)) {
+      const frameInfo = textureInfo.frames[textureFramePath];
+
+      assetMetaData[textureFramePath] = {
+        id: textureFramePath,
+        width: frameInfo.sourceSize.w,
+        height: frameInfo.sourceSize.h,
+      }  
+    }
   }
 
   // check for PNGExpress meta data file?
@@ -91,43 +105,27 @@ async function getAssetMetaData(allAssetData, assetPath, settings, itemOptions) 
             // add state
             id = state === 'default' ? id : id + state;
 
-            const meta = {
-              ...assetInfo,
+            assetMetaData[id] = {
+              ...pick(assetInfo, ['x', 'y', 'zIndex', 'visible', 'opacity']),
+              ...assetMetaData[id]
             }
-
-            delete meta.id;
-            delete meta.states;
-
-            AssetMetaData[id] = meta;
           }
         }
 
-        return AssetMetaData;
+        return assetMetaData;
       }
     } catch(error) { 
       console.log(error) 
     }
   }
 
-  for (const textureInfo of allAssetData || []) {
-    for (const textureFramePath of Object.keys(textureInfo.frames)) {
-      const frameInfo = textureInfo.frames[textureFramePath];
-
-      AssetMetaData[textureFramePath] = {
-        id: textureFramePath,
-        width: frameInfo.sourceSize.w,
-        height: frameInfo.sourceSize.h,
-      }  
-    }
-  }
-
-  return AssetMetaData;
+  return assetMetaData;
 }
 
 async function parseAssetData(allAssetData, assetPath, settings, itemOptions) {
-  const AssetMetaData = await getAssetMetaData(allAssetData, assetPath, settings, itemOptions),
-   includeSizeInfo = get(itemOptions, 'includeSizeInfo', settings.includeSizeInfo),
-  includePNGExpressMetadata = get(itemOptions, 'includePNGExpressMetadata', settings.includePNGExpressMetadata);
+  const assetMetaData = await getAssetMetaData(allAssetData, assetPath, settings, itemOptions),
+    includeSizeInfo = get(itemOptions, 'includeSizeInfo', settings.includeSizeInfo),
+    includePNGExpressMetadata = get(itemOptions, 'includePNGExpressMetadata', settings.includePNGExpressMetadata);
  
   // bepaal base path
   const basePath = assetPath,
@@ -138,14 +136,12 @@ async function parseAssetData(allAssetData, assetPath, settings, itemOptions) {
       // always use framepath as info
       let assetInfo = framePath;
       
-
-      
       // get and set asset meta info
       if (includeSizeInfo || includePNGExpressMetadata) {
-        if (AssetMetaData[framePath]) {
+        if (assetMetaData[framePath]) {
           assetInfo = {
             id: framePath,
-            ...AssetMetaData[framePath]
+            ...assetMetaData[framePath]
           }
         } else {
           // warn, no asset info found
@@ -220,6 +216,7 @@ function getScriptPath(assetPath, scriptDirectory) {
   if (assetParts.length < 2) {
     assetParts.push(assetName);
   }
+
 
   assetPath = assetParts.join('/');
 
