@@ -8,6 +8,7 @@ const baseOptions = {
   'format': 'pixijs4',
   'texture-format': 'png',
   'jpg-quality': 100,
+  'max-size': 2048,
   'png-opt-level':0,
   'opt':'RGBA8888',
   'prepend-folder-name': true,
