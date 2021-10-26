@@ -49,6 +49,7 @@ export async function pack(directory, settings) {
       'replace': `${directoryName}=${itemPath}`,
       'extrude': get(itemOptions, 'extrude', settings.extrude) ? '1' : '0',
       'texture-format': textureFormat,
+      'max-size': get(itemOptions, 'maxSize', settings.maxSize),
     }
 
   const spinner = ora(`Packing ${itemPath}`).start();
