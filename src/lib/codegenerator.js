@@ -149,11 +149,6 @@ async function parseAssetData(allAssetData, assetPath, settings, itemOptions) {
         }
       }
 
-
-      if (framePath.includes('eiland')) {
-        console.log('build', convertPathToVariableName(framePath, basePath), assetInfo)
-      }
-
       set(parsedData, convertPathToVariableName(framePath, basePath), assetInfo);
     }
   }
@@ -217,7 +212,6 @@ function getScriptPath(assetPath, scriptDirectory) {
     assetParts.push(assetName);
   }
 
-
   assetPath = assetParts.join('/');
 
   return `${path.join(scriptDirectory, assetPath)}/assets/sprites-${assetName}.ts`;
@@ -228,7 +222,7 @@ export async function generateCode(assetPath, settings, itemOptions) {
   const scriptDirectory = get(itemOptions, 'scriptDirectory', settings.scriptDirectory);
 
   // read all generated json
-  const paths = await globby(`${path.join(settings.targetDirectory, assetPath)}/*[0-9]+.json`),
+  const paths = await globby(`${path.posix.join(settings.targetDirectory, assetPath, '/')}*[0-9]+.json`),
     actions = [];
 
   for (const filepath of paths) {
@@ -237,6 +231,11 @@ export async function generateCode(assetPath, settings, itemOptions) {
 
   // parse data to object
   const allTextureInfo = await Promise.all(actions);
+
+  if (allTextureInfo.length === 0) {
+    console.error(`No texture info found for path ${assetPath}`);
+    return;
+  }
 
   const parsedAssetData = await parseAssetData(allTextureInfo, assetPath, settings, itemOptions),
     loaderInfo = {

@@ -67,8 +67,8 @@ export async function pack(directory, settings) {
 
     return;
   }
-
-  await fixSpritesheetJSON(`${path.join(settings.targetDirectory, itemPath)}`);
+  
+  await fixSpritesheetJSON(`${path.posix.join(settings.targetDirectory, itemPath)}`);
 
   await generateCode(itemPath, settings, itemOptions);
 

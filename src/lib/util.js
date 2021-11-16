@@ -1,6 +1,7 @@
 import { globby } from 'globby';
 import set from 'set-value';
 import fs from 'fs-extra';
+import path from 'path';
 import get from 'get-value';
 
 export function makeVariableSafe(value) {
@@ -37,7 +38,7 @@ function getNumberOfPacks(data) {
 
 export async function fixSpritesheetJSON(jsonPath) {
   // get all generated json
-  const paths = await globby(`${jsonPath}/*.json`);
+  const paths = await globby(`${path.posix.join(jsonPath, '/')}*.json`);
 
   for (const filepath of paths) {
     // get resolution from filename
@@ -54,6 +55,7 @@ export async function fixSpritesheetJSON(jsonPath) {
 
     // unset related_multi_packs value so pixi won't choke
     set(data, 'meta.related_multi_packs');
+
 
     // write contents back to file
     await fs.writeJson(filepath, data);
