@@ -88,10 +88,11 @@ async function getAssetMetaData(allAssetData, assetPath, settings, itemOptions) 
   // check for PNGExpress meta data file?
   if (includePNGExpressMetadata) {
     try {
-      const metaDataFile = await findUp('pngexpress-metadata.json', {cwd:path.join(settings.sourceDirectory, assetPath), type:'file'}) 
+      const assetPath = path.join(settings.sourceDirectory, assetPath);
+      const metaDataFile = await findUp('pngexpress-metadata.json', {cwd:assetPath, type:'file'}) 
 
       if (metaDataFile) {
-        const relativePath = `${path.relative(metaDataFile, path.join(settings.sourceDirectory, assetPath)).replace('../', '')}/`,
+        const relativePath = `${path.relative(metaDataFile, assetPath).replace(`..${path.sep}`, '')}/`,
           metaFromFile = await fs.readJson(metaDataFile);
 
         for (const assetInfo of metaFromFile.assets) {
