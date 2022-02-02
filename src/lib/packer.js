@@ -6,7 +6,7 @@ const get = require('get-value');
 
 import { packFolder } from './texturepacker';
 import { generateCode } from './codegenerator';
-import { fixSpritesheetScaleMeta } from './util';
+import { fixSpritesheetScaleMeta, removeGeneratedAssets } from './util';
 
 const isPacking = {},
   shouldPackAgain = {};
@@ -32,7 +32,8 @@ export async function pack(directory, settings) {
   }
 
   const itemPathParts = itemPath.split('/'),
-    directoryName = itemPathParts.pop();
+    directoryName = itemPathParts.pop(),
+    targetPath = `${path.join(settings.targetDirectory, itemPath)}`;
 
   if (isPacking[itemPath]) {
     console.log(logSymbols.warning, chalk.yellow(`Allready packing, starting again afterwards...`));
@@ -43,6 +44,7 @@ export async function pack(directory, settings) {
   isPacking[itemPath] = true;
 
   const textureFormat = get(itemOptions, 'textureFormat', settings.textureFormat),
+  onlyGenerateCode = get(itemOptions, 'onlyGenerateCode', settings.onlyGenerateCode),
     options = {
       'sheet': `${path.join(settings.targetDirectory, itemPath, directoryName)}-{n1}{v}.${textureFormat}`,
       'data': `${path.join(settings.targetDirectory, itemPath, directoryName)}-{n1}{v}.json`,
@@ -69,10 +71,16 @@ export async function pack(directory, settings) {
     return;
   }
 
-  await fixSpritesheetScaleMeta(`${path.join(settings.targetDirectory, itemPath)}`);
+  
+  await fixSpritesheetScaleMeta(targetPath);
 
   await generateCode(itemPath, settings, itemOptions);
-
+  
+  // remove generated assets?
+  if (onlyGenerateCode === true) {
+    await removeGeneratedAssets(targetPath);
+  }
+  
   isPacking[itemPath] = false;
 
   if (shouldPackAgain[itemPath]) {

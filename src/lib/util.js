@@ -27,7 +27,7 @@ export async function fixSpritesheetScaleMeta(jsonPath) {
   // get all generated json
   const paths = await globby(`${jsonPath}/*.json`);
 
-  for (const filepath of paths) {
+  return Promise.all(paths.map(async (filepath) => {
     // get resolution from filename
     const resolution = getResolutionOfUrl(filepath);
 
@@ -38,7 +38,17 @@ export async function fixSpritesheetScaleMeta(jsonPath) {
     set(data, 'meta.scale', resolution);
 
     // write contents back to file
-    await fs.writeJson(filepath, data);
-  }
+    return fs.writeJson(filepath, data);
+  }));
+}
+
+
+
+export async function removeGeneratedAssets(assetsPath) {
+  // get all generated json
+  const paths = await globby(`${assetsPath}/*.{json,jpeg,jpg,png}`);
+
+  // remove files
+  return Promise.all(paths.map(filepath => fs.unlink(filepath)));
 }
 

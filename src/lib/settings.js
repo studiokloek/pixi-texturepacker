@@ -21,6 +21,7 @@ export async function readSettingsFrom(_file) {
       watchDelay: 500,
       extrude: false,
       textureFormat: 'png',
+      onlyGenerateCode: false,
       includeSizeInfo: false,
       includePNGExpressMetadata: false,
       directories: []
