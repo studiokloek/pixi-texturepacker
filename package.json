@@ -11,7 +11,7 @@
   },
   "scripts": {
     "build": "rollup -c",
-    "test": "$npm_package_bin_pixi_texturepacker ./test/assets.json",
+    "test": "./bin/index.js ./test/assets.json",
     "watch": "rollup -c -w",
     "release": "np"
   },
