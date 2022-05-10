@@ -3,9 +3,9 @@ import get from 'get-value';
 import logSymbols from 'log-symbols';
 import ora from 'ora';
 import path from 'path';
-import { generateCode } from './codegenerator';
 import { packFolder } from './texturepacker';
-import { fixSpritesheetJSON } from './util';
+import { fixSpritesheetJSON, removeGeneratedAssets } from './util';
+import { checkCodeExists, generateCode } from './codegenerator';
 
 const isPacking = {},
   shouldPackAgain = {};
@@ -23,6 +23,18 @@ export async function packAll(directories, settings) {
 export async function pack(directory, settings) {
   let itemPath, itemOptions;
 
+  const reportPackDone = async function (directory, settings, itemPath) {
+    isPacking[itemPath] = false;
+
+    if (shouldPackAgain[itemPath]) {
+      shouldPackAgain[itemPath] = false;
+      spinner.warn(`Needs repacking, something changed while packing...`);
+      await pack(directory, settings);
+    } else {
+      spinner.succeed(`Done packing ${itemPath}`);
+    }
+  };
+
   if (Array.isArray(directory)) {
     itemPath = directory[0];
     itemOptions = directory[1];
@@ -31,10 +43,11 @@ export async function pack(directory, settings) {
   }
 
   const itemPathParts = itemPath.split('/'),
-    directoryName = itemPathParts.pop();
+    directoryName = itemPathParts.pop(),
+    targetPath = `${path.join(settings.targetDirectory, itemPath)}`;
 
   if (isPacking[itemPath]) {
-    console.log(logSymbols.warning, chalk.yellow(`Allready packing, starting again afterwards...`));
+    console.log(logSymbols.warning, chalk.yellow(`Already packing, starting again afterwards...`));
     shouldPackAgain[itemPath] = true;
     return;
   }
@@ -42,16 +55,31 @@ export async function pack(directory, settings) {
   isPacking[itemPath] = true;
 
   const textureFormat = get(itemOptions, 'textureFormat', settings.textureFormat),
+    onlyGenerateCode = get(itemOptions, 'onlyGenerateCode', settings.onlyGenerateCode),
     options = {
-      'sheet': `${path.join(settings.targetDirectory, itemPath, directoryName)}-{n1}{v}.${textureFormat}`,
-      'data': `${path.join(settings.targetDirectory, itemPath, directoryName)}-{n1}{v}.json`,
-      'replace': `^${directoryName}=${itemPath}`,
-      'extrude': get(itemOptions, 'extrude', settings.extrude) ? '1' : '0',
+      sheet: `${path.join(
+        settings.targetDirectory,
+        itemPath,
+        directoryName,
+      )}-{n1}{v}.${textureFormat}`,
+      data: `${path.join(settings.targetDirectory, itemPath, directoryName)}-{n1}{v}.json`,
+      replace: `^${directoryName}=${itemPath}`,
+      extrude: get(itemOptions, 'extrude', settings.extrude) ? '1' : '0',
       'texture-format': textureFormat,
       'max-size': get(itemOptions, 'maxSize', settings.maxSize),
-    }
+    };
 
   const spinner = ora(`Packing ${itemPath}`).start();
+
+  // if we only need to generate code, first check if it exists so we can skip building textures
+  if (onlyGenerateCode === true) {
+    const codeExists = await checkCodeExists(itemPath, settings);
+
+    if (codeExists === true) {
+      await reportPackDone(directory, settings, itemPath);
+      return;
+    }
+  }
 
   try {
     const success = await packFolder(`${path.join(settings.sourceDirectory, itemPath)}`, options);
@@ -67,18 +95,15 @@ export async function pack(directory, settings) {
 
     return;
   }
-  
+
   await fixSpritesheetJSON(`${path.posix.join(settings.targetDirectory, itemPath)}`);
 
   await generateCode(itemPath, settings, itemOptions);
 
-  isPacking[itemPath] = false;
-
-  if (shouldPackAgain[itemPath]) {
-    shouldPackAgain[itemPath] = false;
-    spinner.warn(`Needs repacking, something changed while packing...`);
-    await pack(directory, settings);
-  } else {
-    spinner.succeed(`Done packing ${itemPath}`);
+  // remove generated assets?
+  if (onlyGenerateCode === true) {
+    await removeGeneratedAssets(targetPath);
   }
+
+  await reportPackDone(directory, settings, itemPath);
 }
