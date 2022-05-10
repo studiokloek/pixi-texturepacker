@@ -13,7 +13,7 @@
     "build": "rollup -c",
     "test": "./bin/index.js ./test/assets.json",
     "watch": "rollup -c -w",
-    "release": "np"
+    "release": "np --any-branch"
   },
   "engines": {
     "node": ">=8.10.0"
