@@ -5,7 +5,7 @@ const path = require('path');
 const get = require('get-value');
 
 import { packFolder } from './texturepacker';
-import { generateCode } from './codegenerator';
+import { checkCodeExists, generateCode } from './codegenerator';
 import { fixSpritesheetScaleMeta, removeGeneratedAssets } from './util';
 
 const isPacking = {},
@@ -21,8 +21,22 @@ export async function packAll(directories, settings) {
   console.log(logSymbols.success, chalk.green(`Done packing all items...`));
 }
 
+
 export async function pack(directory, settings) {
   let itemPath, itemOptions;
+
+
+  const reportPackDone = async function(directory, settings, itemPath) {
+    isPacking[itemPath] = false;
+  
+    if (shouldPackAgain[itemPath]) {
+      shouldPackAgain[itemPath] = false;
+      spinner.warn(`Needs repacking, something changed while packing...`);
+      await pack(directory, settings);
+    } else {
+      spinner.succeed(`Done packing ${itemPath}`);
+    }
+  }
 
   if (Array.isArray(directory)) {
     itemPath = directory[0];
@@ -36,7 +50,7 @@ export async function pack(directory, settings) {
     targetPath = `${path.join(settings.targetDirectory, itemPath)}`;
 
   if (isPacking[itemPath]) {
-    console.log(logSymbols.warning, chalk.yellow(`Allready packing, starting again afterwards...`));
+    console.log(logSymbols.warning, chalk.yellow(`Already packing, starting again afterwards...`));
     shouldPackAgain[itemPath] = true;
     return;
   }
@@ -56,6 +70,17 @@ export async function pack(directory, settings) {
 
   const spinner = ora(`Packing ${itemPath}`).start();
 
+
+  // if we only need to generate code, first check if it exists so we can skip building textures
+  if (onlyGenerateCode === true) {
+    const codeExists = await checkCodeExists(itemPath, settings);
+
+    if (codeExists === true) {
+      await reportPackDone(directory, settings, itemPath)
+      return;
+    }
+  }
+
   try {
     const success = await packFolder(`${path.join(settings.sourceDirectory, itemPath)}`, options);
 
@@ -70,7 +95,6 @@ export async function pack(directory, settings) {
 
     return;
   }
-
   
   await fixSpritesheetScaleMeta(targetPath);
 
@@ -81,13 +105,5 @@ export async function pack(directory, settings) {
     await removeGeneratedAssets(targetPath);
   }
   
-  isPacking[itemPath] = false;
-
-  if (shouldPackAgain[itemPath]) {
-    shouldPackAgain[itemPath] = false;
-    spinner.warn(`Needs repacking, something changed while packing...`);
-    await pack(directory, settings);
-  } else {
-    spinner.succeed(`Done packing ${itemPath}`);
-  }
+  await reportPackDone(directory, settings, itemPath)
 }

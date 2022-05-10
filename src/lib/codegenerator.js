@@ -219,6 +219,14 @@ function getScriptPath(assetPath, scriptDirectory) {
 }
 
 
+export async function checkCodeExists(assetPath, settings, itemOptions) {
+  const scriptDirectory = get(itemOptions, 'scriptDirectory', settings.scriptDirectory),
+    scriptPath = getScriptPath(assetPath, scriptDirectory);
+
+  return await fs.pathExists(scriptPath);
+}
+
+
 export async function generateCode(assetPath, settings, itemOptions) {
   const scriptDirectory = get(itemOptions, 'scriptDirectory', settings.scriptDirectory);
 
