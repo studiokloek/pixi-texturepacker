@@ -12,7 +12,7 @@ export async function readSettingsFrom(_file) {
     const data = await fs.readJSON(_file);
 
     settings = get(data, 'sprites', {});
-    
+
     settings = defaults(settings, {
       sourceDirectory: './assets/',
       scriptDirectory: './assets/converted/',
@@ -20,10 +20,11 @@ export async function readSettingsFrom(_file) {
       watch: false,
       watchDelay: 500,
       extrude: false,
+      originalResolution: 2,
       textureFormat: 'png',
       includeSizeInfo: false,
       includePNGExpressMetadata: false,
-      directories: []
+      directories: [],
     });
   } catch {
     spinner.fail(`Could not load settings from ${_file}... (does it exist?)`);

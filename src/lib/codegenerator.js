@@ -1,6 +1,6 @@
 import camelcase from 'camelcase';
 import chalk from 'chalk';
-import { findUp }  from 'find-up';
+import { findUp } from 'find-up';
 import fs from 'fs-extra';
 import get from 'get-value';
 import { globby } from 'globby';
@@ -11,7 +11,6 @@ import set from 'set-value';
 import upperCamelCase from 'uppercamelcase';
 import pick from 'object.pick';
 import { makeVariableSafe } from './util';
-
 
 const loaderInfoTemplate = `export const {assetsVariable}LoaderInfo = {
   assets: {assetsVariable},
@@ -27,14 +26,17 @@ function convertPathToVariableName(filePath, basePath) {
   filePath = `${filePath}`;
 
   // basepath er af halen, path splitsen en opschonen
-  let parts = filePath.replace(`${basePath}/`, '').split('/').map(value => makeVariableSafe(value));
+  let parts = filePath
+    .replace(`${basePath}/`, '')
+    .split('/')
+    .map((value) => makeVariableSafe(value));
 
   // haal laatste onderdeel er af
   let lastPart = parts.pop();
   lastPart = lastPart.toUpperCase();
 
   // camelcase andere onderdelen
-  parts = parts.map(part => camelcase(part));
+  parts = parts.map((part) => camelcase(part));
 
   // haal titel elementen uit base path
   let titleParts = basePath.split('/');
@@ -45,10 +47,13 @@ function convertPathToVariableName(filePath, basePath) {
 
   if (parts.length > 0) {
     filePath = parts.join('.');
-    filePath = filePath.replace(/(\W^\.)/g, '').replace(/\.{2,}/g, '.').replace(/^\./, '').replace(/\.$/, '');
+    filePath = filePath
+      .replace(/(\W^\.)/g, '')
+      .replace(/\.{2,}/g, '.')
+      .replace(/^\./, '')
+      .replace(/\.$/, '');
     return [titleParts, filePath, lastPart].join('.');
-  }
-  else {
+  } else {
     return [titleParts, lastPart].join('.');
   }
 }
@@ -65,9 +70,15 @@ function getNumberOfParts(allDataItems) {
 
 async function getAssetMetaData(allAssetData, assetPath, settings, itemOptions) {
   const includeSizeInfo = get(itemOptions, 'includeSizeInfo', settings.includeSizeInfo),
-  includePNGExpressMetadata = get(itemOptions, 'includePNGExpressMetadata', settings.includePNGExpressMetadata);
+    includePNGExpressMetadata = get(
+      itemOptions,
+      'includePNGExpressMetadata',
+      settings.includePNGExpressMetadata,
+    ),
+    originalResolution = get(itemOptions, 'originalResolution', settings.originalResolution);
 
-  const assetMetaData = {}
+  const assetMetaData = {};
+
   if (!includeSizeInfo && !includePNGExpressMetadata) {
     return assetMetaData;
   }
@@ -81,7 +92,7 @@ async function getAssetMetaData(allAssetData, assetPath, settings, itemOptions) 
         id: textureFramePath,
         width: frameInfo.sourceSize.w,
         height: frameInfo.sourceSize.h,
-      }  
+      };
     }
   }
 
@@ -89,35 +100,49 @@ async function getAssetMetaData(allAssetData, assetPath, settings, itemOptions) 
   if (includePNGExpressMetadata) {
     try {
       const fullAssetPath = path.join(settings.sourceDirectory, assetPath);
-  
-      const metaDataFile = await findUp('pngexpress-metadata.json', {cwd:fullAssetPath, type:'file'}) 
+
+      const metaDataFile = await findUp('pngexpress-metadata.json', {
+        cwd: fullAssetPath,
+        type: 'file',
+      });
 
       if (metaDataFile) {
-        const relativePath = `${path.relative(metaDataFile, fullAssetPath).replace(`..${path.sep}`, '')}/`,
+        const relativePath = `${path
+            .relative(metaDataFile, fullAssetPath)
+            .replace(`..${path.sep}`, '')}/`,
           metaFromFile = await fs.readJson(metaDataFile);
 
         for (const assetInfo of metaFromFile.assets) {
-          for (const state of assetInfo.states) {            
+          for (const state of assetInfo.states) {
             // get asset id, remove ducplicate part of path
             let id = assetPath + assetInfo.id.replace(relativePath, '');
 
             // remove starting slash
-            id = (id[0] === '/') ? id.slice(1) : id;
+            id = id[0] === '/' ? id.slice(1) : id;
 
             // add state
             id = state === 'default' ? id : id + state;
 
+            const meta = pick(assetInfo, ['x', 'y', 'zIndex', 'visible', 'opacity']);
+
+            // fix pos based on resolution
+            meta.x = meta.x / originalResolution;
+            meta.y = meta.y / originalResolution;
+
+            // fix opacity
+            meta.opacity = meta.opacity / 100;
+
             assetMetaData[id] = {
-              ...pick(assetInfo, ['x', 'y', 'zIndex', 'visible', 'opacity']),
-              ...assetMetaData[id]
-            }
+              ...meta,
+              ...assetMetaData[id],
+            };
           }
         }
 
         return assetMetaData;
       }
-    } catch(error) { 
-      console.log(error) 
+    } catch (error) {
+      console.log(error);
     }
   }
 
@@ -127,8 +152,12 @@ async function getAssetMetaData(allAssetData, assetPath, settings, itemOptions) 
 async function parseAssetData(allAssetData, assetPath, settings, itemOptions) {
   const assetMetaData = await getAssetMetaData(allAssetData, assetPath, settings, itemOptions),
     includeSizeInfo = get(itemOptions, 'includeSizeInfo', settings.includeSizeInfo),
-    includePNGExpressMetadata = get(itemOptions, 'includePNGExpressMetadata', settings.includePNGExpressMetadata);
- 
+    includePNGExpressMetadata = get(
+      itemOptions,
+      'includePNGExpressMetadata',
+      settings.includePNGExpressMetadata,
+    );
+
   // bepaal base path
   const basePath = assetPath,
     parsedData = {};
@@ -137,17 +166,22 @@ async function parseAssetData(allAssetData, assetPath, settings, itemOptions) {
     for (const framePath of Object.keys(assetData.frames)) {
       // always use framepath as info
       let assetInfo = framePath;
-      
+
       // get and set asset meta info
       if (includeSizeInfo || includePNGExpressMetadata) {
         if (assetMetaData[framePath]) {
           assetInfo = {
             id: framePath,
-            ...assetMetaData[framePath]
-          }
+            ...assetMetaData[framePath],
+          };
         } else {
           // warn, no asset info found
-          console.log('\n',logSymbols.warning, chalk.yellow(`Could not find asset info for ${framePath}, check the export filename.`), '\n');
+          console.log(
+            '\n',
+            logSymbols.warning,
+            chalk.yellow(`Could not find asset info for ${framePath}, check the export filename.`),
+            '\n',
+          );
         }
       }
 
@@ -171,7 +205,7 @@ function getSortedItems(_itemsData) {
     const x = a[0],
       y = b[0];
 
-    return x < y ? -1 : (x > y ? 1 : 0);
+    return x < y ? -1 : x > y ? 1 : 0;
   });
 
   const items = {};
@@ -185,22 +219,22 @@ function getSortedItems(_itemsData) {
 function generateContents(parsedAssetData, loaderData) {
   let contents = '';
 
-  const assetName = Object.keys(parsedAssetData)[0];
-  const items = getSortedItems(parsedAssetData[assetName]);
+  const assetName = Object.keys(parsedAssetData)[0] ?? 'Unknown';
+  const items = getSortedItems(parsedAssetData[assetName] ?? {});
 
   let itemsContent = JSON.stringify(items, undefined, 2);
-  itemsContent = itemsContent.replace(/"([^"()]+)":/g, "$1:");
+  itemsContent = itemsContent.replace(/"([^"()]+)":/g, '$1:');
 
   contents = `${contents}${pupa(assetTemplate, {
     assetName: assetName,
-    assetData: itemsContent
+    assetData: itemsContent,
   })}\n`;
 
   // loader
   contents = `${contents}${pupa(loaderInfoTemplate, {
     assetsVariable: assetName,
     fileName: loaderData.fileName,
-    numberOfParts: loaderData.numberOfParts
+    numberOfParts: loaderData.numberOfParts,
   })}\n`;
 
   return contents;
@@ -219,7 +253,6 @@ function getScriptPath(assetPath, scriptDirectory) {
   return `${path.join(scriptDirectory, assetPath)}/assets/sprites-${assetName}.ts`;
 }
 
-
 export async function checkCodeExists(assetPath, settings, itemOptions) {
   const scriptDirectory = get(itemOptions, 'scriptDirectory', settings.scriptDirectory),
     scriptPath = getScriptPath(assetPath, scriptDirectory);
@@ -227,12 +260,13 @@ export async function checkCodeExists(assetPath, settings, itemOptions) {
   return await fs.pathExists(scriptPath);
 }
 
-
 export async function generateCode(assetPath, settings, itemOptions) {
   const scriptDirectory = get(itemOptions, 'scriptDirectory', settings.scriptDirectory);
 
   // read all generated json
-  const paths = await globby(`${path.posix.join(settings.targetDirectory, assetPath, '/')}*[0-9]+.json`),
+  const paths = await globby(
+      `${path.posix.join(settings.targetDirectory, assetPath, '/')}*[0-9]+.json`,
+    ),
     actions = [];
 
   for (const filepath of paths) {
@@ -250,7 +284,7 @@ export async function generateCode(assetPath, settings, itemOptions) {
   const parsedAssetData = await parseAssetData(allTextureInfo, assetPath, settings, itemOptions),
     loaderInfo = {
       fileName: assetPath,
-      numberOfParts: getNumberOfParts(allTextureInfo)
+      numberOfParts: getNumberOfParts(allTextureInfo),
     };
 
   const contents = generateContents(parsedAssetData, loaderInfo),
