@@ -28,7 +28,7 @@ export function getResolutionOfUrl(url, defaultValue) {
 function getNumberOfPacks(data) {
   // did we allready determine the number of packs in a previous run?
   let numberOfPacks = get(data, 'meta.number_of_packs', { default: 0 });
-  
+
   if (numberOfPacks === 0) {
     numberOfPacks = get(data, 'meta.related_multi_packs', { default: [] }).length + 1;
   }
@@ -56,9 +56,15 @@ export async function fixSpritesheetJSON(jsonPath) {
     // unset related_multi_packs value so pixi won't choke
     set(data, 'meta.related_multi_packs');
 
-
     // write contents back to file
     await fs.writeJson(filepath, data);
   }
 }
 
+export async function removeGeneratedAssets(assetsPath) {
+  // get all generated json
+  const paths = await globby(`${assetsPath}/*.{json,jpeg,jpg,png}`);
+
+  // remove files
+  return Promise.all(paths.map((filepath) => fs.unlink(filepath)));
+}
