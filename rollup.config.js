@@ -1,4 +1,4 @@
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 import run from '@rollup/plugin-run';
 
 const isDevelopmentMode = process.env.ROLLUP_WATCH === 'true';
