@@ -56,7 +56,7 @@ export async function pack(directory, settings) {
 
   const textureFormat = get(itemOptions, 'textureFormat', settings.textureFormat),
     onlyGenerateCode = get(itemOptions, 'onlyGenerateCode', settings.onlyGenerateCode),
-    options = {
+    packerOptions = {
       sheet: `${path.join(
         settings.targetDirectory,
         itemPath,
@@ -82,7 +82,7 @@ export async function pack(directory, settings) {
   }
 
   try {
-    const success = await packFolder(`${path.join(settings.sourceDirectory, itemPath)}`, options);
+    const success = await packFolder(`${path.join(settings.sourceDirectory, itemPath)}`, packerOptions, settings);
 
     if (!success) {
       spinner.fail(`Error packing ${itemPath}`);

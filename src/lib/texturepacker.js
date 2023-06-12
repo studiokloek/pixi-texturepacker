@@ -31,8 +31,8 @@ const baseOptions = {
   'variant': ['1:@2x', '0.5:']
 };
 
-export async function packFolder(path, options) {
-  const command = buildTexturePackerCommand(path, defaults(options, baseOptions));
+export async function packFolder(path, options, settings) {
+  const command = buildTexturePackerCommand(path, defaults(options, baseOptions), settings);
 
   try {
     await execProcess(command);
@@ -47,8 +47,16 @@ export async function packFolder(path, options) {
   return true;
 }
 
-function buildTexturePackerCommand(path, options) {
+const RESOLUTION_PREFIXES = {
+  1: '',
+  2: '@2x',
+  3: '@3x',
+  4: '@4x',
+}
+
+function buildTexturePackerCommand(path, options, settings) {
   options = options || {};
+  settings = settings || {};
 
   if (options.extrude === '1') {
     options['shape-padding'] = 0;
@@ -56,6 +64,21 @@ function buildTexturePackerCommand(path, options) {
 
   if (options['texture-format'] === 'jpg') {
     options['alpha-handling'] = 'ReduceBorderArtifacts';
+  }
+
+  // determine variants
+  if (Array.isArray(settings.resolutions) && typeof settings.originalResolution === 'number') {
+    const variants = [];
+
+    for (const resolution of settings.resolutions) {
+      const prefix = RESOLUTION_PREFIXES[resolution];
+
+      if (prefix !== undefined) {
+        variants.push(`${resolution/settings.originalResolution}:${prefix}`);
+      }
+    }
+
+    options['variant'] = variants;
   }
 
   const command = new TexturePackerCommand();

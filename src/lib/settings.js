@@ -20,6 +20,7 @@ export async function readSettingsFrom(_file) {
       watch: false,
       watchDelay: 500,
       extrude: false,
+      resolutions:[1, 2],
       originalResolution: 2,
       textureFormat: 'png',
       includeSizeInfo: false,
