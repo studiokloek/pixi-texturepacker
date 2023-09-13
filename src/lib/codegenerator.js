@@ -126,8 +126,10 @@ async function getAssetMetaData(allAssetData, assetPath, settings, itemOptions) 
             const meta = pick(assetInfo, ['x', 'y', 'zIndex', 'visible', 'opacity']);
 
             // fix pos based on resolution
-            meta.x = meta.x / originalResolution;
-            meta.y = meta.y / originalResolution;
+            if (typeof settings.originalResolution === 'number') {
+              meta.x = meta.x / originalResolution;
+              meta.y = meta.y / originalResolution;
+            } 
 
             // fix opacity
             meta.opacity = meta.opacity / 100;
