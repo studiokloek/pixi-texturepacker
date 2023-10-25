@@ -9,6 +9,7 @@ const pupa = require('pupa');
 const uppercamelcase = require('uppercamelcase');
 const camelcase = require('camelcase');
 const path = require('path');
+const pick = require('object.pick');
 
 const loaderInfoTemplate = `export default {
   assets: {assetsVariable},
@@ -24,14 +25,17 @@ function convertPathToVariableName(filePath, basePath) {
   filePath = `${filePath}`;
 
   // basepath er af halen, path splitsen en opschonen
-  let parts = filePath.replace(`${basePath}/`, '').split('/').map(value => makeVariableSafe(value));
+  let parts = filePath
+    .replace(`${basePath}/`, '')
+    .split('/')
+    .map((value) => makeVariableSafe(value));
 
   // haal laatste onderdeel er af
   let lastPart = parts.pop();
   lastPart = lastPart.toUpperCase();
 
   // camelcase andere onderdelen
-  parts = parts.map(part => camelcase(part));
+  parts = parts.map((part) => camelcase(part));
 
   // haal titel elementen uit base path
   let titleParts = basePath.split('/');
@@ -47,14 +51,16 @@ function convertPathToVariableName(filePath, basePath) {
 
   if (parts.length > 0) {
     filePath = parts.join('.');
-    filePath = filePath.replace(/(\W^\.)/g, '').replace(/\.{2,}/g, '.').replace(/^\./, '').replace(/\.$/, '');
+    filePath = filePath
+      .replace(/(\W^\.)/g, '')
+      .replace(/\.{2,}/g, '.')
+      .replace(/^\./, '')
+      .replace(/\.$/, '');
     return [titleParts, filePath, lastPart].join('.');
-  }
-  else {
+  } else {
     return [titleParts, lastPart].join('.');
   }
 }
-
 
 function getNumberOfParts(allDataItems) {
   if (allDataItems.length > 0) {
@@ -64,70 +70,80 @@ function getNumberOfParts(allDataItems) {
     return numberOfRelatedPacks + 1;
   }
 
-
   return 0;
 }
 
 async function getAssetMetaData(allAssetData, assetPath, settings, itemOptions) {
   const includeSizeInfo = get(itemOptions, 'includeSizeInfo', settings.includeSizeInfo),
-  includePNGExpressMetadata = get(itemOptions, 'includePNGExpressMetadata', settings.includePNGExpressMetadata);
+    includePNGExpressMetadata = get(
+      itemOptions,
+      'includePNGExpressMetadata',
+      settings.includePNGExpressMetadata,
+    );
 
-  const AssetMetaData = {}
+  const assetMetaData = {};
   if (!includeSizeInfo && !includePNGExpressMetadata) {
-    return AssetMetaData;
+    return assetMetaData;
   }
-  
+
+  // basis meta data
+  for (const textureInfo of allAssetData || []) {
+    for (const textureFramePath of Object.keys(textureInfo.frames)) {
+      const frameInfo = textureInfo.frames[textureFramePath];
+
+      assetMetaData[textureFramePath] = {
+        id: textureFramePath,
+        width: frameInfo.sourceSize.w,
+        height: frameInfo.sourceSize.h,
+      };
+    }
+  }
+
   // check for PNGExpress meta data file?
   if (includePNGExpressMetadata) {
     try {
-      const metaDataFile = await findUp('pngexpress-metadata.json', {cwd:path.join(settings.sourceDirectory, assetPath), type:'file'}) 
-      
+      const metaDataFile = await findUp('pngexpress-metadata.json', {
+        cwd: path.join(settings.sourceDirectory, assetPath),
+        type: 'file',
+      });
+
       if (metaDataFile) {
-        const relativePath = `${path.relative(metaDataFile, path.join(settings.sourceDirectory, assetPath)).replace('../', '')}/`,
+        const relativePath = `${path
+            .relative(metaDataFile, path.join(settings.sourceDirectory, assetPath))
+            .replace('../', '')}/`,
           metaFromFile = await fs.readJson(metaDataFile);
 
         for (const assetInfo of metaFromFile.assets) {
-          for (const state of assetInfo.states) {            
+          for (const state of assetInfo.states) {
             // get asset id, remove ducplicate part of path
             let id = assetPath + assetInfo.id.replace(relativePath, '');
 
             // remove starting slash
-            id = (id[0] === '/') ? id.slice(1) : id;
+            id = id[0] === '/' ? id.slice(1) : id;
 
             // add state
             id = state === 'default' ? id : id + state;
 
-            const meta = {
-              ...assetInfo,
-            }
+            const meta = pick(assetInfo, ['x', 'y', 'zIndex', 'visible', 'opacity']);
 
-            delete meta.id;
-            delete meta.states;
+            // fix opacity
+            meta.opacity = meta.opacity / 100;
 
-            AssetMetaData[id] = meta;
+            assetMetaData[id] = {
+              ...meta,
+              ...assetMetaData[id],
+            };
           }
         }
 
-        return AssetMetaData;
+        return assetMetaData;
       }
-    } catch(error) { 
-      console.log(error) 
+    } catch (error) {
+      console.log(error);
     }
   }
 
-  for (const textureInfo of allAssetData || []) {
-    for (const textureFramePath of Object.keys(textureInfo.frames)) {
-      const frameInfo = textureInfo.frames[textureFramePath];
-      
-      AssetMetaData[textureFramePath] = {
-        id: textureFramePath,
-        width: frameInfo.sourceSize.w,
-        height: frameInfo.sourceSize.h,
-      }  
-    }
-  }
-
-  return AssetMetaData;
+  return assetMetaData;
 }
 
 async function parseAssetData(allAssetData, assetPath, settings, itemOptions) {
@@ -146,8 +162,8 @@ async function parseAssetData(allAssetData, assetPath, settings, itemOptions) {
       if (AssetMetaData[framePath]) {
         assetInfo = {
           id: framePath,
-          ...AssetMetaData[framePath]
-        }
+          ...AssetMetaData[framePath],
+        };
       }
 
       set(parsedData, convertPathToVariableName(framePath, basePath), assetInfo);
@@ -170,7 +186,7 @@ function getSortedItems(_itemsData) {
     const x = a[0],
       y = b[0];
 
-    return x < y ? -1 : (x > y ? 1 : 0);
+    return x < y ? -1 : x > y ? 1 : 0;
   });
 
   const items = {};
@@ -188,18 +204,18 @@ function generateContents(parsedAssetData, loaderData) {
   const items = getSortedItems(parsedAssetData[assetName]);
 
   let itemsContent = JSON.stringify(items, undefined, 2);
-  itemsContent = itemsContent.replace(/"([^"()]+)":/g, "$1:");
+  itemsContent = itemsContent.replace(/"([^"()]+)":/g, '$1:');
 
   contents = `${contents}${pupa(assetTemplate, {
     assetName: assetName,
-    assetData: itemsContent
+    assetData: itemsContent,
   })}\n`;
 
   // loader
   contents = `${contents}${pupa(loaderInfoTemplate, {
     assetsVariable: assetName,
     fileName: loaderData.fileName,
-    numberOfParts: loaderData.numberOfParts
+    numberOfParts: loaderData.numberOfParts,
   })}\n`;
 
   return contents;
@@ -218,14 +234,12 @@ function getScriptPath(assetPath, scriptDirectory) {
   return `${path.join(scriptDirectory, assetPath)}/assets/sprites-${assetName}.ts`;
 }
 
-
 export async function checkCodeExists(assetPath, settings, itemOptions) {
   const scriptDirectory = get(itemOptions, 'scriptDirectory', settings.scriptDirectory),
     scriptPath = getScriptPath(assetPath, scriptDirectory);
 
   return await fs.pathExists(scriptPath);
 }
-
 
 export async function generateCode(assetPath, settings, itemOptions) {
   const scriptDirectory = get(itemOptions, 'scriptDirectory', settings.scriptDirectory);
@@ -244,7 +258,7 @@ export async function generateCode(assetPath, settings, itemOptions) {
   const parsedAssetData = await parseAssetData(allTextureInfo, assetPath, settings, itemOptions),
     loaderInfo = {
       fileName: assetPath,
-      numberOfParts: getNumberOfParts(allTextureInfo)
+      numberOfParts: getNumberOfParts(allTextureInfo),
     };
 
   const contents = generateContents(parsedAssetData, loaderInfo),
