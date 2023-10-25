@@ -1,6 +1,6 @@
 {
   "name": "@studiokloek/pixi-texturepacker",
-  "version": "0.8.6",
+  "version": "0.8.7",
   "description": "Pack sprites for PixiJS using TexturePacker CLI.",
   "author": "Martijn Swart <opensource@studiokloek.nl> (https://studiokloek.nl)",
   "license": "MIT",
