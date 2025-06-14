@@ -22,6 +22,7 @@ export async function readSettingsFrom(_file) {
       extrude: false,
       resolutions:[1, 2],
       originalResolution: 2,
+      numTitleParts: 2,
       textureFormat: 'png',
       includeSizeInfo: false,
       includePNGExpressMetadata: false,

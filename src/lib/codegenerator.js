@@ -21,7 +21,7 @@ const loaderInfoTemplate = `export const {assetsVariable}LoaderInfo = {
 
 const assetTemplate = `export const {assetName} = {assetData};`;
 
-function convertPathToVariableName(filePath, basePath) {
+function convertPathToVariableName(filePath, basePath, numTitleParts) {
   // forceer string
   filePath = `${filePath}`;
 
@@ -31,6 +31,7 @@ function convertPathToVariableName(filePath, basePath) {
     .split('/')
     .map((value) => makeVariableSafe(value));
 
+  
   // haal laatste onderdeel er af
   let lastPart = parts.pop();
   lastPart = lastPart.toUpperCase();
@@ -40,7 +41,9 @@ function convertPathToVariableName(filePath, basePath) {
 
   // haal titel elementen uit base path
   let titleParts = basePath.split('/');
-  titleParts = titleParts.slice(titleParts.length - (titleParts.length === 1 ? 1 : 2));
+
+  // bepaal max en min title parts en haal deze uit titel
+  titleParts = titleParts.slice(titleParts.length - Math.max(1, Math.min(numTitleParts, titleParts.length)));
 
   titleParts.push('sprites');
   titleParts = upperCamelCase(titleParts.join('-'));
@@ -154,6 +157,7 @@ async function getAssetMetaData(allAssetData, assetPath, settings, itemOptions) 
 async function parseAssetData(allAssetData, assetPath, settings, itemOptions) {
   const assetMetaData = await getAssetMetaData(allAssetData, assetPath, settings, itemOptions),
     includeSizeInfo = get(itemOptions, 'includeSizeInfo', settings.includeSizeInfo),
+    numTitleParts = get(itemOptions, 'numTitleParts', settings.numTitleParts),
     includePNGExpressMetadata = get(
       itemOptions,
       'includePNGExpressMetadata',
@@ -187,9 +191,10 @@ async function parseAssetData(allAssetData, assetPath, settings, itemOptions) {
         }
       }
 
-      set(parsedData, convertPathToVariableName(framePath, basePath), assetInfo);
+      set(parsedData, convertPathToVariableName(framePath, basePath, numTitleParts), assetInfo);
     }
   }
+
 
   return parsedData;
 }
@@ -226,6 +231,7 @@ function generateContents(parsedAssetData, loaderData) {
 
   let itemsContent = JSON.stringify(items, undefined, 2);
   itemsContent = itemsContent.replace(/"([^"()]+)":/g, '$1:');
+
 
   contents = `${contents}${pupa(assetTemplate, {
     assetName: assetName,
