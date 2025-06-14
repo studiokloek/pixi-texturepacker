@@ -14,14 +14,7 @@ export async function watch(directories, settings) {
 async function watchDirectory(directory, settings) {
   return new Promise((_resolver) => {
 
-    let itemPath, itemOptions = {};
-
-    if (Array.isArray(directory)) {
-      itemPath = directory[0];
-      itemOptions = directory[1];
-    } else {
-      itemPath = directory;
-    }
+    const {path: itemPath, ...itemOptions} = directory;
 
     if ((settings.watch !== true && itemOptions.watch !== true) || itemOptions.watch === false) {
        _resolver();

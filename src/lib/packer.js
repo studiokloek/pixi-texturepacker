@@ -21,7 +21,8 @@ export async function packAll(directories, settings) {
 }
 
 export async function pack(directory, settings) {
-  let itemPath, itemOptions;
+
+  const {path: itemPath, ...itemOptions} = directory;
 
   const reportPackDone = async function (directory, settings, itemPath) {
     isPacking[itemPath] = false;
@@ -34,13 +35,6 @@ export async function pack(directory, settings) {
       spinner.succeed(`Done packing ${itemPath}`);
     }
   };
-
-  if (Array.isArray(directory)) {
-    itemPath = directory[0];
-    itemOptions = directory[1];
-  } else {
-    itemPath = directory;
-  }
 
   const itemPathParts = itemPath.split('/'),
     directoryName = itemPathParts.pop(),

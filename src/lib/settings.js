@@ -41,5 +41,20 @@ export async function readSettingsFrom(_file) {
     spinner.fail(`Found no directories to process...`);
   }
 
+  // parse directories to same object format {director: string, ...options}
+  settings.directories = settings.directories.map((directory) => {
+    // already object?
+    if (typeof directory === 'object' && !Array.isArray(directory)) {
+      return directory;
+    }
+
+    return Array.isArray(directory) ? {
+        path: directory[0],
+        ...directory[1],
+      } : {
+        path: directory,
+      };
+  });
+
   return settings;
 }
